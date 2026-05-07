@@ -1,0 +1,2837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Automator — Vision Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       Design tokens — Linear-inspired dark theme · sky-blue accent
+       No purple. System-default dark.
+       ========================================================================== */
+    :root {
+      color-scheme: dark;
+
+      /* surfaces */
+      --bg: #09090B;
+      --surface: #131316;
+      --surface-2: #1C1C20;
+      --surface-3: #26262B;
+      --surface-hover: #1A1A1E;
+
+      /* text */
+      --text: #FAFAFA;
+      --text-2: #A1A1AA;
+      --text-3: #71717A;
+      --text-4: #52525B;
+
+      /* borders */
+      --border: rgba(255, 255, 255, 0.06);
+      --border-2: rgba(255, 255, 255, 0.10);
+      --border-strong: rgba(255, 255, 255, 0.18);
+
+      /* brand — sky blue */
+      --brand: #0EA5E9;
+      --brand-hover: #38BDF8;
+      --brand-soft: rgba(14, 165, 233, 0.12);
+      --brand-soft-2: rgba(14, 165, 233, 0.20);
+      --brand-text: #7DD3FC;
+
+      /* LinkedIn brand for LinkedIn-context only */
+      --linkedin: #0A66C2;
+
+      /* semantic */
+      --success: #10B981;
+      --success-soft: rgba(16, 185, 129, 0.12);
+      --warning: #F59E0B;
+      --warning-soft: rgba(245, 158, 11, 0.12);
+      --danger: #EF4444;
+      --danger-soft: rgba(239, 68, 68, 0.12);
+
+      --radius-sm: 6px;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+      --shadow: 0 4px 16px rgba(0,0,0,0.4);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.55);
+
+      --sidebar-w: 248px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.005em;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    code, .mono { font-family: "Geist Mono", "SF Mono", Consolas, monospace; font-size: 0.92em; }
+
+    /* ambient glow at top */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 380px;
+      background:
+        radial-gradient(ellipse 70% 100% at 30% 0%, rgba(14, 165, 233, 0.08), transparent 70%),
+        radial-gradient(ellipse 50% 80% at 80% 0%, rgba(56, 189, 248, 0.05), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ==========================================================================
+       Layout shell
+       ========================================================================== */
+    .app {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ============== sidebar ============== */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 16px 12px 12px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 8px 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .brand__logo {
+      width: 30px; height: 30px;
+      flex-shrink: 0;
+    }
+    .brand__name {
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: -0.015em;
+    }
+    .brand__sub {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 1px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 18px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .profile-chip:hover { background: var(--surface-3); }
+    .avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .profile-chip__info { flex: 1; min-width: 0; }
+    .profile-chip__name {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .profile-chip__niche {
+      font-size: 11px;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .profile-chip__caret { color: var(--text-3); font-size: 12px; }
+
+    .nav-section { margin-bottom: 14px; }
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-4);
+      padding: 0 8px 6px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-2);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 0;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      transition: all 0.12s;
+    }
+    .nav-item:hover { background: var(--surface-2); color: var(--text); }
+    .nav-item.is-active {
+      background: var(--brand-soft);
+      color: var(--brand-text);
+    }
+    .nav-item.is-active .nav-icon { color: var(--brand); }
+    .nav-icon {
+      width: 16px; height: 16px;
+      flex-shrink: 0;
+      color: var(--text-3);
+    }
+    .nav-item.is-active .nav-icon { color: var(--brand); }
+    .nav-badge {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: var(--brand);
+      color: white;
+    }
+    .nav-badge--danger { background: var(--danger); }
+    .kbd {
+      margin-left: auto;
+      font-family: "Geist Mono", monospace;
+      font-size: 10px;
+      color: var(--text-3);
+      background: var(--surface-3);
+      border: 1px solid var(--border-2);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+
+    .sidebar__footer {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-3);
+      padding-left: 8px;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+      50% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.08); }
+    }
+
+    /* ============== main ============== */
+    .main { padding: 0; min-width: 0; }
+    .main-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(9, 9, 11, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+    .crumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-3);
+    }
+    .crumb__current { color: var(--text); font-weight: 500; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .search-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      color: var(--text-3);
+      font-size: 12px;
+      width: 240px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .search-box:hover { background: var(--surface-2); border-color: var(--border-2); color: var(--text-2); }
+    .search-box svg { width: 13px; height: 13px; }
+    .search-box .kbd { margin-left: auto; }
+
+    .icon-btn {
+      width: 32px; height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-2);
+      position: relative;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+    .icon-btn svg { width: 15px; height: 15px; }
+    .icon-btn__dot {
+      position: absolute;
+      top: 6px; right: 6px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--danger);
+      border: 1.5px solid var(--bg);
+    }
+
+    .view {
+      padding: 28px 32px 60px;
+      max-width: 1280px;
+    }
+    .view[hidden] { display: none; }
+
+    .view-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.022em;
+      margin: 0 0 4px;
+    }
+    .view-subtitle {
+      font-size: 13.5px;
+      color: var(--text-2);
+      margin: 0 0 24px;
+      line-height: 1.55;
+    }
+
+    /* ==========================================================================
+       Components
+       ========================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 13px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-2);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.12s;
+    }
+    .btn:hover { background: var(--surface-3); border-color: var(--border-strong); }
+    .btn--primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #001821;
+      font-weight: 600;
+    }
+    .btn--primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+    .btn--ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-2);
+    }
+    .btn--ghost:hover { background: var(--surface-2); color: var(--text); }
+    .btn--sm { padding: 5px 10px; font-size: 12px; }
+    .btn--icon { padding: 6px; width: 28px; height: 28px; justify-content: center; }
+    .btn-icon-svg { width: 14px; height: 14px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+    .card--lg { padding: 22px; }
+    .card__title {
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: -0.005em;
+    }
+    .card__title-link {
+      font-size: 12px;
+      color: var(--text-3);
+      font-weight: 400;
+      cursor: pointer;
+    }
+    .card__title-link:hover { color: var(--brand); }
+
+    .grid { display: grid; gap: 16px; }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2-uneven { grid-template-columns: 1.6fr 1fr; }
+    @media (max-width: 980px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .grid-3, .grid-2, .grid-2-uneven { grid-template-columns: 1fr; }
+    }
+
+    /* stat cards */
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+    }
+    .stat__label {
+      font-size: 12px;
+      color: var(--text-2);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .stat__value {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat__delta {
+      font-size: 12px;
+      color: var(--success);
+      margin-top: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-weight: 500;
+    }
+    .stat__delta--down { color: var(--danger); }
+    .stat__delta--neutral { color: var(--text-3); font-weight: 400; }
+    .stat__spark {
+      margin-top: 10px;
+      height: 32px;
+      width: 100%;
+    }
+
+    /* pill / badge */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+    .pill--brand { background: var(--brand-soft); color: var(--brand-text); }
+    .pill--success { background: var(--success-soft); color: var(--success); }
+    .pill--warning { background: var(--warning-soft); color: var(--warning); }
+    .pill--danger { background: var(--danger-soft); color: #FCA5A5; }
+    .pill--gray { background: var(--surface-3); color: var(--text-2); }
+    .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    /* input */
+    .input, .textarea, .select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.12s;
+    }
+    .input:focus, .textarea:focus, .select:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    .textarea { resize: vertical; min-height: 80px; line-height: 1.55; }
+    .field-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-2);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    /* segmented */
+    .seg {
+      display: inline-flex;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 3px;
+    }
+    .seg__btn {
+      border: 0;
+      background: transparent;
+      color: var(--text-3);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 5px;
+      transition: all 0.12s;
+    }
+    .seg__btn:hover { color: var(--text-2); }
+    .seg__btn.is-active {
+      background: var(--surface-3);
+      color: var(--text);
+    }
+
+    /* slider */
+    .range-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .range-row:last-child { border-bottom: 0; }
+    .range-row__label { font-size: 13px; font-weight: 500; min-width: 110px; }
+    .range-row__sublabel { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .range-row__value {
+      font-size: 12px;
+      color: var(--brand-text);
+      min-width: 80px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      background: var(--surface-3);
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--brand);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--brand);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--brand);
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 0 1px var(--brand);
+      cursor: pointer;
+    }
+
+    /* ==========================================================================
+       View: Dashboard
+       ========================================================================== */
+    .greeting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .greeting__title { font-size: 22px; font-weight: 600; letter-spacing: -0.022em; margin: 0 0 2px; }
+    .greeting__date { font-size: 13px; color: var(--text-2); }
+
+    .next-post {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 20px;
+      align-items: start;
+    }
+    .next-post__body {
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text);
+      white-space: pre-line;
+      max-height: 200px;
+      overflow: hidden;
+      position: relative;
+    }
+    .next-post__body::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--surface));
+      pointer-events: none;
+    }
+    .next-post__meta { display: flex; gap: 6px; margin-top: 12px; flex-wrap: wrap; }
+    .next-post__when {
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-soft-2);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+    }
+    .next-post__when-label { font-size: 11px; color: var(--brand-text); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+    .next-post__when-time { font-size: 18px; font-weight: 600; color: var(--text); margin: 4px 0 2px; letter-spacing: -0.01em; }
+    .next-post__when-rel { font-size: 12px; color: var(--brand-text); opacity: 0.75; }
+
+    .activity { list-style: none; margin: 0; padding: 0; }
+    .activity li {
+      display: flex; gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .activity li:last-child { border-bottom: 0; padding-bottom: 0; }
+    .activity__dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 7px;
+    }
+    .activity__dot--published { background: var(--success); }
+    .activity__dot--scheduled { background: var(--brand); }
+    .activity__dot--draft { background: var(--text-3); }
+    .activity__dot--failed { background: var(--danger); }
+    .activity__main { flex: 1; min-width: 0; }
+    .activity__title { font-weight: 500; }
+    .activity__sub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .activity__time { font-size: 12px; color: var(--text-3); flex-shrink: 0; }
+
+    /* ==========================================================================
+       View: Compose — A/B variants + LinkedIn-style live preview
+       ========================================================================== */
+    .compose-grid {
+      display: grid;
+      grid-template-columns: 1fr 460px;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 1100px) { .compose-grid { grid-template-columns: 1fr; } }
+
+    .voice-meter {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-soft-2);
+      border-radius: var(--radius);
+      margin-top: 12px;
+    }
+    .voice-meter__bar {
+      flex: 1;
+      height: 5px;
+      background: rgba(0,0,0,0.4);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .voice-meter__fill {
+      height: 100%;
+      width: 87%;
+      background: linear-gradient(90deg, var(--brand), #38BDF8);
+      border-radius: 3px;
+    }
+    .voice-meter__label { font-size: 12px; color: var(--brand-text); font-weight: 500; }
+    .voice-meter__value { font-size: 12px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    /* Variants */
+    .variants {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .variant {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .variant:hover { border-color: var(--border-strong); }
+    .variant.is-selected {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    .variant__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .variant__label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .variant__score {
+      font-size: 11px;
+      color: var(--brand-text);
+      font-weight: 600;
+      background: var(--brand-soft);
+      padding: 1px 7px;
+      border-radius: 999px;
+    }
+    .variant__preview {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-2);
+      white-space: pre-line;
+      max-height: 90px;
+      overflow: hidden;
+      position: relative;
+    }
+    .variant__preview::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 30px;
+      background: linear-gradient(to bottom, transparent, var(--surface-2));
+    }
+
+    /* LinkedIn-style preview */
+    .li-preview {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+    .li-preview__header {
+      padding: 14px 16px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .li-preview__avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .li-preview__name { font-size: 14px; font-weight: 600; color: #000; }
+    .li-preview__headline { font-size: 12px; color: #00000099; line-height: 1.4; }
+    .li-preview__time { font-size: 12px; color: #00000099; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+    .li-preview__more { margin-left: auto; color: #00000099; }
+    .li-preview__body {
+      padding: 12px 16px 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #000;
+      white-space: pre-line;
+    }
+    .li-preview__hashtags {
+      padding: 8px 16px 0;
+      color: #0a66c2;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .li-preview__image {
+      margin-top: 12px;
+      height: 240px;
+      background: linear-gradient(135deg, #0F172A 0%, #1E40AF 100%);
+      position: relative;
+    }
+    .li-preview__image-tag {
+      position: absolute;
+      top: 12px; left: 12px;
+      background: rgba(0,0,0,0.65);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    .li-preview__reactions {
+      padding: 10px 16px;
+      border-top: 1px solid #E0E0E0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #00000099;
+    }
+    .li-preview__reactions-icons { display: inline-flex; }
+    .li-preview__reactions-icons span {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid white;
+      display: inline-block;
+      margin-right: -4px;
+    }
+    .li-preview__actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid #E0E0E0;
+    }
+    .li-preview__action {
+      padding: 10px 0;
+      text-align: center;
+      font-size: 12px;
+      color: #00000099;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .li-preview__action svg { width: 16px; height: 16px; }
+
+    .prediction {
+      background: var(--success-soft);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .prediction__icon {
+      width: 32px; height: 32px;
+      background: var(--success-soft);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .prediction__main { flex: 1; }
+    .prediction__title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .prediction__sub { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+    .prediction__value { font-size: 18px; font-weight: 700; color: var(--success); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+    /* ==========================================================================
+       View: Trends
+       ========================================================================== */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .filter-bar__divider { width: 1px; height: 20px; background: var(--border); }
+
+    .trend-row {
+      display: grid;
+      grid-template-columns: 64px 1fr 90px 110px;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: all 0.12s;
+      margin-bottom: 8px;
+    }
+    .trend-row:hover { border-color: var(--border-strong); background: var(--surface-2); }
+    .trend-row__score {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--brand);
+      letter-spacing: -0.025em;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .trend-row__score-label {
+      font-size: 10px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      text-align: center;
+      margin-top: 1px;
+    }
+    .trend-row__title { font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 4px; }
+    .trend-row__angle {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+    .trend-row__angle strong { color: var(--text); font-weight: 600; }
+    .trend-row__meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-3);
+    }
+    .trend-row__spark { width: 90px; height: 36px; }
+    .trend-row__cta { display: flex; justify-content: flex-end; }
+
+    /* ==========================================================================
+       View: Schedule (calendar)
+       ========================================================================== */
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .calendar__day {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      min-height: 140px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .calendar__day--past { opacity: 0.55; }
+    .calendar__day-name { font-size: 10px; color: var(--text-3); text-transform: uppercase; font-weight: 600; letter-spacing: 0.06em; }
+    .calendar__day-num { font-size: 14px; font-weight: 600; }
+    .calendar__day-num--today {
+      background: var(--brand);
+      color: #001821;
+      border-radius: 50%;
+      width: 24px; height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+    .calendar__post {
+      background: var(--brand-soft);
+      border-left: 3px solid var(--brand);
+      padding: 5px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--brand-text);
+      line-height: 1.3;
+    }
+    .calendar__post--published {
+      background: var(--success-soft);
+      border-left-color: var(--success);
+      color: #6EE7B7;
+    }
+    .calendar__post-time { display: block; font-weight: 700; font-size: 10px; opacity: 0.8; }
+
+    /* ==========================================================================
+       View: Inbox (engagement queue)
+       ========================================================================== */
+    .inbox-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .inbox-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+    .inbox-list li {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+      display: flex;
+      gap: 10px;
+    }
+    .inbox-list li:hover { background: var(--surface-2); }
+    .inbox-list li.is-active { background: var(--brand-soft); border-left: 2px solid var(--brand); padding-left: 12px; }
+    .inbox-list__avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+    }
+    .inbox-list__main { flex: 1; min-width: 0; }
+    .inbox-list__top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+    }
+    .inbox-list__name { font-size: 13px; font-weight: 600; }
+    .inbox-list__time { font-size: 11px; color: var(--text-3); }
+    .inbox-list__preview {
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.4;
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .inbox-list__post { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+    .inbox-list__unread {
+      width: 8px; height: 8px;
+      background: var(--brand);
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 12px;
+    }
+
+    .inbox-detail {
+      padding: 0;
+      overflow: hidden;
+    }
+    .inbox-detail__head {
+      display: flex;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .inbox-detail__source {
+      padding: 14px 18px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+    .inbox-detail__source-label {
+      font-size: 10px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .inbox-detail__comment { padding: 16px 18px; font-size: 13.5px; line-height: 1.6; }
+    .inbox-detail__draft {
+      padding: 16px 18px;
+      background: var(--brand-soft);
+      border-top: 1px solid var(--border);
+    }
+    .inbox-detail__draft-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--brand-text);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .inbox-detail__draft-text {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .inbox-detail__actions {
+      display: flex;
+      gap: 8px;
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ==========================================================================
+       View: Analytics
+       ========================================================================== */
+    .heatmap {
+      display: grid;
+      grid-template-columns: 60px repeat(7, 1fr);
+      gap: 4px;
+      font-size: 11px;
+    }
+    .heatmap__row-label { color: var(--text-3); padding: 4px 8px 4px 0; text-align: right; }
+    .heatmap__col-label { color: var(--text-3); text-align: center; padding-bottom: 4px; }
+    .heatmap__cell {
+      height: 32px;
+      border-radius: 4px;
+      background: rgba(14, 165, 233, 0.05);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .heatmap__cell:hover { transform: scale(1.06); }
+
+    .top-posts { list-style: none; margin: 0; padding: 0; }
+    .top-posts li {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      font-size: 13px;
+    }
+    .top-posts li:last-child { border-bottom: 0; }
+    .top-posts__rank {
+      width: 24px;
+      height: 24px;
+      background: var(--surface-3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .top-posts__rank--1 { background: var(--success-soft); color: var(--success); }
+    .top-posts__title { font-weight: 500; }
+    .top-posts__meta { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .top-posts__metric {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .top-posts__metric-sub {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 400;
+      margin-top: 1px;
+      text-align: right;
+    }
+
+    .topics-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .topics-table th {
+      text-align: left;
+      font-weight: 500;
+      color: var(--text-3);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .topics-table td {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .topics-table tr:last-child td { border-bottom: 0; }
+    .topics-table .bar {
+      height: 6px;
+      background: var(--surface-3);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .topics-table .bar__fill {
+      height: 100%;
+      background: var(--brand);
+      border-radius: 3px;
+    }
+
+    /* ==========================================================================
+       View: Setup wizard
+       ========================================================================== */
+    .stepper { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .step { display: flex; align-items: center; gap: 10px; }
+    .step__num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border-2);
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .step--done .step__num {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #001821;
+    }
+    .step--current .step__num {
+      background: var(--surface);
+      border-color: var(--brand);
+      color: var(--brand);
+      box-shadow: 0 0 0 3px var(--brand-soft);
+    }
+    .step__label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+    .step--current .step__label { color: var(--text); font-weight: 600; }
+    .step__line {
+      flex: 1;
+      height: 1.5px;
+      background: var(--border-2);
+      max-width: 60px;
+    }
+    .step--done .step__line { background: var(--brand); }
+
+    .kv-list {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px 24px;
+      font-size: 13px;
+    }
+    .kv-list dt { color: var(--text-2); font-weight: 500; }
+    .kv-list dd { margin: 0; line-height: 1.55; }
+
+    .chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip-list span {
+      padding: 4px 10px;
+      background: var(--brand-soft);
+      color: var(--brand-text);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .checkbox-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+    .checkbox-list label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .checkbox-list label:hover { background: var(--surface-2); }
+    .checkbox-list input[type="checkbox"] { accent-color: var(--brand); }
+    .checkbox-list .check-meta { color: var(--text-3); margin-left: auto; font-size: 12px; }
+
+    /* notification panel (open) */
+    .notif-panel {
+      position: absolute;
+      top: 48px;
+      right: 16px;
+      width: 360px;
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      z-index: 50;
+    }
+    .notif-panel__head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .notif-panel__title { font-size: 13px; font-weight: 600; }
+    .notif-list { list-style: none; margin: 0; padding: 0; max-height: 400px; overflow-y: auto; }
+    .notif-list li {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .notif-list li:hover { background: var(--surface-2); }
+    .notif-list li:last-child { border-bottom: 0; }
+    .notif-list__icon {
+      width: 28px; height: 28px;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .notif-list__main { flex: 1; min-width: 0; font-size: 12.5px; line-height: 1.5; }
+    .notif-list__time { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+    /* command palette mock */
+    .cmdk-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 18vh;
+    }
+    .cmdk-overlay.is-open { display: flex; }
+    .cmdk {
+      width: 560px;
+      max-width: 92%;
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .cmdk__input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .cmdk__input-wrap svg { width: 16px; height: 16px; color: var(--text-3); }
+    .cmdk__input {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+    }
+    .cmdk__input::placeholder { color: var(--text-3); }
+    .cmdk__list { padding: 6px; max-height: 340px; overflow-y: auto; }
+    .cmdk__group-label {
+      font-size: 10px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+      padding: 8px 12px 4px;
+    }
+    .cmdk__item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      color: var(--text-2);
+      cursor: pointer;
+    }
+    .cmdk__item:hover, .cmdk__item.is-focused { background: var(--brand-soft); color: var(--text); }
+    .cmdk__item-icon {
+      width: 14px; height: 14px;
+      color: var(--text-3);
+    }
+    .cmdk__item.is-focused .cmdk__item-icon { color: var(--brand); }
+    .cmdk__item-shortcut {
+      margin-left: auto;
+      font-family: "Geist Mono", monospace;
+      font-size: 10px;
+      color: var(--text-3);
+    }
+
+    /* toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      box-shadow: var(--shadow-lg);
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      max-width: 360px;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: all 0.2s;
+      pointer-events: none;
+    }
+    .toast.is-shown { transform: translateY(0); opacity: 1; }
+    .toast__icon {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--success-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* hidden but accessible */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .compose-grid, .inbox-grid, .next-post { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- ============================================================
+         SIDEBAR
+         ============================================================ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <!-- Logo: rounded square with three connected nodes (input → process → output) -->
+        <svg class="brand__logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="LinkedIn Automator logo">
+          <rect width="32" height="32" rx="7" fill="#0EA5E9"/>
+          <circle cx="9" cy="11" r="2.4" fill="white"/>
+          <circle cx="23" cy="11" r="2.4" fill="white"/>
+          <circle cx="16" cy="22" r="2.4" fill="white"/>
+          <path d="M9.7 12.6L15.3 20.4" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M22.3 12.6L16.7 20.4" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M11 11H21" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.4"/>
+        </svg>
+        <div>
+          <div class="brand__name">LinkedIn Automator</div>
+          <div class="brand__sub">Vision · v0.2</div>
+        </div>
+      </div>
+
+      <div class="profile-chip">
+        <div class="avatar">TM</div>
+        <div class="profile-chip__info">
+          <div class="profile-chip__name">Trishla Mishra</div>
+          <div class="profile-chip__niche">AI agents for SaaS founders</div>
+        </div>
+        <div class="profile-chip__caret">⌄</div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Workspace</div>
+        <button class="nav-item is-active" data-tab="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+          <span class="kbd">D</span>
+        </button>
+        <button class="nav-item" data-tab="compose">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Compose
+          <span class="kbd">C</span>
+        </button>
+        <button class="nav-item" data-tab="trends">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Trends
+          <span class="nav-badge">12</span>
+        </button>
+        <button class="nav-item" data-tab="schedule">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Schedule
+        </button>
+        <button class="nav-item" data-tab="inbox">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          Inbox
+          <span class="nav-badge nav-badge--danger">5</span>
+        </button>
+        <button class="nav-item" data-tab="analytics">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Analytics
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Configuration</div>
+        <button class="nav-item" data-tab="setup">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Setup
+        </button>
+        <button class="nav-item">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Help & docs
+        </button>
+      </div>
+
+      <div class="sidebar__footer">
+        <span class="status-dot"></span>
+        <span>All systems operational</span>
+      </div>
+    </aside>
+
+    <!-- ============================================================
+         MAIN
+         ============================================================ -->
+    <main class="main">
+      <div class="main-header" style="position:relative;">
+        <div class="crumb">
+          <span>Workspace</span>
+          <span>/</span>
+          <span class="crumb__current" id="crumb-current">Dashboard</span>
+        </div>
+        <div class="header-actions">
+          <div class="search-box" id="searchBox">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span>Search posts, trends, settings…</span>
+            <span class="kbd">⌘K</span>
+          </div>
+          <button class="icon-btn" id="notifBtn" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="icon-btn__dot"></span>
+          </button>
+          <button class="btn btn--primary btn--sm">
+            <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New post
+          </button>
+        </div>
+
+        <!-- notification panel (hidden by default) -->
+        <div class="notif-panel" id="notifPanel" hidden>
+          <div class="notif-panel__head">
+            <span class="notif-panel__title">Notifications</span>
+            <span class="card__title-link">Mark all read</span>
+          </div>
+          <ul class="notif-list">
+            <li>
+              <div class="notif-list__icon" style="background:var(--success-soft)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="notif-list__main">
+                <strong>Post published</strong> — "The 4-folder system I use" got <strong>42 reactions</strong> in the first hour.
+                <div class="notif-list__time">2h ago</div>
+              </div>
+            </li>
+            <li>
+              <div class="notif-list__icon" style="background:var(--brand-soft)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <div class="notif-list__main">
+                <strong>12 new trends</strong> matched your niche. Top score: <strong>94</strong>.
+                <div class="notif-list__time">3h ago</div>
+              </div>
+            </li>
+            <li>
+              <div class="notif-list__icon" style="background:var(--warning-soft)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="notif-list__main">
+                <strong>5 comments</strong> waiting in your Inbox. Sarah K. asked about your routing layer.
+                <div class="notif-list__time">5h ago</div>
+              </div>
+            </li>
+            <li>
+              <div class="notif-list__icon" style="background:var(--surface-3)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div class="notif-list__main">
+                Tomorrow's draft is ready for review · <strong>9:00 AM</strong> publish slot
+                <div class="notif-list__time">6h ago</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ================ DASHBOARD ================ -->
+      <section class="view" id="view-dashboard">
+        <div class="greeting">
+          <div>
+            <h1 class="greeting__title">Good morning, Trishla</h1>
+            <div class="greeting__date">Monday, May 4 · 7-day posting streak</div>
+          </div>
+          <div class="seg">
+            <button class="seg__btn">7d</button>
+            <button class="seg__btn is-active">30d</button>
+            <button class="seg__btn">90d</button>
+          </div>
+        </div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-4" style="margin-bottom: 20px;">
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Posts published
+            </div>
+            <div class="stat__value">23</div>
+            <div class="stat__delta">↑ 28% vs last 30d</div>
+            <svg class="stat__spark" viewBox="0 0 100 32" preserveAspectRatio="none"><polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,24 12,20 24,22 36,16 48,18 60,12 72,14 84,8 100,6"/><polyline fill="rgba(14,165,233,0.1)" stroke="none" points="0,24 12,20 24,22 36,16 48,18 60,12 72,14 84,8 100,6 100,32 0,32"/></svg>
+          </div>
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Engagement rate
+            </div>
+            <div class="stat__value">6.4<span style="font-size:16px;color:var(--text-3);font-weight:500">%</span></div>
+            <div class="stat__delta">↑ 1.2pp vs niche avg</div>
+            <svg class="stat__spark" viewBox="0 0 100 32" preserveAspectRatio="none"><polyline fill="none" stroke="#10B981" stroke-width="1.6" points="0,28 12,24 24,18 36,22 48,14 60,16 72,10 84,12 100,4"/></svg>
+          </div>
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Top trend score
+            </div>
+            <div class="stat__value">94<span style="font-size:14px;color:var(--text-3);font-weight:500">/100</span></div>
+            <div class="stat__delta stat__delta--neutral">12 fresh trends today</div>
+            <svg class="stat__spark" viewBox="0 0 100 32" preserveAspectRatio="none"><g fill="#0EA5E9" opacity="0.85"><rect x="2" y="20" width="6" height="12"/><rect x="14" y="14" width="6" height="18"/><rect x="26" y="22" width="6" height="10"/><rect x="38" y="10" width="6" height="22"/><rect x="50" y="16" width="6" height="16"/><rect x="62" y="6" width="6" height="26"/><rect x="74" y="12" width="6" height="20"/><rect x="86" y="2" width="6" height="30"/></g></svg>
+          </div>
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Time saved
+            </div>
+            <div class="stat__value">14<span style="font-size:16px;color:var(--text-3);font-weight:500">h/mo</span></div>
+            <div class="stat__delta">vs writing manually</div>
+            <svg class="stat__spark" viewBox="0 0 100 32" preserveAspectRatio="none"><polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,30 12,28 24,24 36,26 48,18 60,20 72,12 84,14 100,8"/></svg>
+          </div>
+        </div>
+
+        <!-- Up next + Top trends -->
+        <div class="grid grid-2-uneven" style="margin-bottom: 20px;">
+          <div class="card card--lg">
+            <div class="card__title">
+              Up next · scheduled post
+              <span class="card__title-link">Edit →</span>
+            </div>
+            <div class="next-post">
+              <div>
+                <div style="display:flex;gap:6px;margin-bottom:10px;">
+                  <span class="pill pill--brand"><span class="pill-dot"></span>scheduled</span>
+                  <span class="pill pill--gray">from trend · score 94</span>
+                  <span class="pill pill--success">voice match 87%</span>
+                </div>
+                <div class="next-post__body">I tried LangChain.
+It was 200 lines.
+
+I rebuilt it as a FastAPI router.
+20 lines.
+3x faster.
+Doesn't crash.
+
+The abstractions feel productive.
+They're not.
+They're just hiding the routing decision you already need to make.
+
+Stop chaining.
+Start routing.</div>
+                <div class="next-post__meta">
+                  <span class="pill pill--gray">#AIautomation</span>
+                  <span class="pill pill--gray">#LangChain</span>
+                  <span class="pill pill--gray">#FastAPI</span>
+                  <span class="pill pill--gray">#LLMOps</span>
+                </div>
+              </div>
+              <div class="next-post__when">
+                <div class="next-post__when-label">Tomorrow</div>
+                <div class="next-post__when-time">9:00 AM</div>
+                <div class="next-post__when-rel">in 17h 23m</div>
+                <div style="margin-top:14px;display:flex;gap:6px;">
+                  <button class="btn btn--sm" style="flex:1">Reschedule</button>
+                  <button class="btn btn--sm btn--ghost" title="Cancel">✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card--lg">
+            <div class="card__title">
+              Top trends · today
+              <span class="card__title-link">View all →</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div style="width:40px;height:40px;border-radius:8px;background:var(--brand-soft);border:1px solid var(--brand-soft-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <span style="font-size:14px;font-weight:700;color:var(--brand-text);line-height:1">94</span>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:500;line-height:1.4;">Anthropic releases new agent SDK</div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:2px;">hackernews · 487 points</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div style="width:40px;height:40px;border-radius:8px;background:var(--brand-soft);border:1px solid var(--brand-soft-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <span style="font-size:14px;font-weight:700;color:var(--brand-text);line-height:1">88</span>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:500;line-height:1.4;">"Founders are over-engineering their agents"</div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:2px;">reddit · r/SaaS · 1.2k upvotes</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div style="width:40px;height:40px;border-radius:8px;background:var(--surface-3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <span style="font-size:14px;font-weight:700;color:var(--text-2);line-height:1">81</span>
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:13px;font-weight:500;line-height:1.4;">SaaS valuations slip as AI agents go in-house</div>
+                  <div style="font-size:11px;color:var(--text-3);margin-top:2px;">google news · just now</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity feed -->
+        <div class="card card--lg">
+          <div class="card__title">
+            Recent activity
+            <span class="card__title-link">View history →</span>
+          </div>
+          <ul class="activity">
+            <li>
+              <div class="activity__dot activity__dot--published"></div>
+              <div class="activity__main">
+                <div class="activity__title">Published "The 4-folder system I use for content automation"</div>
+                <div class="activity__sub">42 reactions · 8 comments · 3 reshares</div>
+              </div>
+              <div class="activity__time">2h ago</div>
+            </li>
+            <li>
+              <div class="activity__dot activity__dot--scheduled"></div>
+              <div class="activity__main">
+                <div class="activity__title">Drafted from trend "Anthropic releases new agent SDK"</div>
+                <div class="activity__sub">Voice match 87% · scheduled for tomorrow 9:00 AM</div>
+              </div>
+              <div class="activity__time">4h ago</div>
+            </li>
+            <li>
+              <div class="activity__dot activity__dot--draft"></div>
+              <div class="activity__main">
+                <div class="activity__title">Polished draft "FastAPI vs Flask in 2026"</div>
+                <div class="activity__sub">Voice match 91% · waiting for review</div>
+              </div>
+              <div class="activity__time">6h ago</div>
+            </li>
+            <li>
+              <div class="activity__dot activity__dot--published"></div>
+              <div class="activity__main">
+                <div class="activity__title">Published "I deleted 60% of my codebase"</div>
+                <div class="activity__sub">156 reactions · 24 comments · 11 reshares · top post this week</div>
+              </div>
+              <div class="activity__time">1d ago</div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ================ COMPOSE ================ -->
+      <section class="view" id="view-compose" hidden>
+        <h1 class="view-title">Compose a post</h1>
+        <p class="view-subtitle">Pick a starting point, generate three variants in your voice, and ship the best one.</p>
+
+        <div class="compose-grid">
+          <!-- LEFT: editor -->
+          <div>
+            <div class="card card--lg" style="margin-bottom:14px;">
+              <div class="seg" style="margin-bottom:18px;">
+                <button class="seg__btn is-active">From topic</button>
+                <button class="seg__btn">Polish my draft</button>
+                <button class="seg__btn">From trend</button>
+              </div>
+
+              <label class="field-label">Topic or angle</label>
+              <textarea class="textarea" rows="3">Why I stopped chaining LLMs and started routing them as microservices</textarea>
+
+              <div style="display:flex;gap:8px;margin-top:14px;">
+                <button class="btn btn--primary">
+                  <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+                  Generate 3 variants
+                </button>
+                <button class="btn">+ 5 ideas</button>
+                <button class="btn btn--ghost" style="margin-left:auto;">Voice settings</button>
+              </div>
+
+              <!-- A/B variants -->
+              <div class="variants">
+                <div class="variant">
+                  <div class="variant__head">
+                    <span class="variant__label">Variant A</span>
+                    <span class="variant__score">82</span>
+                  </div>
+                  <div class="variant__preview">I tried every LangChain pattern.
+
+None of them survived production.
+
+So I deleted the framework and wrote 20 lines of FastAPI.
+
+The product got faster, smaller, and stopped crashing.</div>
+                </div>
+                <div class="variant is-selected">
+                  <div class="variant__head">
+                    <span class="variant__label">Variant B</span>
+                    <span class="variant__score">87</span>
+                  </div>
+                  <div class="variant__preview">I tried LangChain.
+It was 200 lines.
+
+I rebuilt it as a FastAPI router.
+20 lines.
+3x faster.
+Doesn't crash.</div>
+                </div>
+                <div class="variant">
+                  <div class="variant__head">
+                    <span class="variant__label">Variant C</span>
+                    <span class="variant__score">79</span>
+                  </div>
+                  <div class="variant__preview">Hot take: "agent frameworks" are a productivity tax.
+
+You don't need a chain. You need a router.
+
+Here's what changed when I made the swap.</div>
+                </div>
+              </div>
+
+              <div class="voice-meter">
+                <span class="voice-meter__label">Voice match</span>
+                <div class="voice-meter__bar"><div class="voice-meter__fill"></div></div>
+                <span class="voice-meter__value">87%</span>
+              </div>
+            </div>
+
+            <div class="card card--lg">
+              <div class="card__title">
+                Image
+                <span class="card__title-link">Regenerate ↻</span>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <div style="width:120px;height:120px;border-radius:var(--radius);background:linear-gradient(135deg,#0F172A 0%,#1E40AF 100%);position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+                  <svg viewBox="0 0 80 80" style="width:60%;height:60%;">
+                    <circle cx="30" cy="35" r="9" fill="#38BDF8" opacity="0.85"/>
+                    <circle cx="50" cy="30" r="6" fill="#7DD3FC" opacity="0.85"/>
+                    <circle cx="55" cy="50" r="7" fill="#0EA5E9" opacity="0.85"/>
+                    <line x1="30" y1="35" x2="50" y2="30" stroke="#7DD3FC" stroke-width="0.8" opacity="0.6"/>
+                    <line x1="50" y1="30" x2="55" y2="50" stroke="#7DD3FC" stroke-width="0.8" opacity="0.6"/>
+                  </svg>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em;">Generated prompt</div>
+                  <div style="font-size:12.5px;color:var(--text);line-height:1.55;font-style:italic;background:var(--surface-2);padding:10px 12px;border-radius:var(--radius);border:1px solid var(--border);">"Abstract minimalist illustration of three connected nodes routing data, deep navy and electric blue gradient, modern editorial style"</div>
+                  <div style="display:flex;gap:6px;margin-top:10px;">
+                    <span class="pill pill--gray">Flux Schnell</span>
+                    <span class="pill pill--gray">1024 × 1024</span>
+                    <span class="pill pill--gray">$0.003</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: LinkedIn-style live preview -->
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z"/></svg>
+              Live preview · how it'll look on LinkedIn
+            </div>
+            <div class="li-preview">
+              <div class="li-preview__header">
+                <div class="li-preview__avatar">TM</div>
+                <div style="flex:1;min-width:0;">
+                  <div class="li-preview__name">Trishla Mishra</div>
+                  <div class="li-preview__headline">Applied AI Engineer · I build AI agents and websites that automate work and capture leads.</div>
+                  <div class="li-preview__time">Now · <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" opacity="0.6"><circle cx="12" cy="12" r="10"/></svg></div>
+                </div>
+                <div class="li-preview__more">⋯</div>
+              </div>
+              <div class="li-preview__body">I tried LangChain.
+It was 200 lines.
+
+I rebuilt it as a FastAPI router.
+20 lines.
+3x faster.
+Doesn't crash.
+
+The abstractions feel productive.
+They're not.
+They're just hiding the routing decision you already need to make.
+
+Stop chaining.
+Start routing.
+
+DM me "ROUTER" and I'll send the architecture.</div>
+              <div class="li-preview__hashtags">#AIautomation #LangChain #FastAPI #LLMOps</div>
+              <div class="li-preview__image">
+                <svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;">
+                  <defs>
+                    <linearGradient id="li-img-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#0F172A"/>
+                      <stop offset="100%" stop-color="#1E40AF"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="400" height="240" fill="url(#li-img-bg)"/>
+                  <circle cx="120" cy="120" r="32" fill="#38BDF8" opacity="0.85"/>
+                  <circle cx="220" cy="100" r="22" fill="#7DD3FC" opacity="0.9"/>
+                  <circle cx="290" cy="135" r="26" fill="#0EA5E9" opacity="0.85"/>
+                  <circle cx="180" cy="160" r="14" fill="#38BDF8" opacity="0.6"/>
+                  <circle cx="260" cy="80" r="11" fill="#7DD3FC" opacity="0.7"/>
+                  <line x1="120" y1="120" x2="220" y2="100" stroke="#7DD3FC" stroke-width="1.5" opacity="0.55"/>
+                  <line x1="220" y1="100" x2="290" y2="135" stroke="#7DD3FC" stroke-width="1.5" opacity="0.55"/>
+                  <line x1="180" y1="160" x2="260" y2="80" stroke="#38BDF8" stroke-width="1.2" opacity="0.45"/>
+                  <line x1="290" y1="135" x2="180" y2="160" stroke="#0EA5E9" stroke-width="1.2" opacity="0.55"/>
+                </svg>
+                <div class="li-preview__image-tag">AI · Flux Schnell</div>
+              </div>
+              <div class="li-preview__reactions">
+                <span class="li-preview__reactions-icons">
+                  <span style="background:#0a66c2"></span>
+                  <span style="background:#df704d"></span>
+                  <span style="background:#6dae4f"></span>
+                </span>
+                <span style="margin-left:8px;">142 · 28 comments</span>
+              </div>
+              <div class="li-preview__actions">
+                <div class="li-preview__action">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  Like
+                </div>
+                <div class="li-preview__action">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  Comment
+                </div>
+                <div class="li-preview__action">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                  Repost
+                </div>
+                <div class="li-preview__action">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Send
+                </div>
+              </div>
+            </div>
+
+            <div class="prediction">
+              <div class="prediction__icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+              </div>
+              <div class="prediction__main">
+                <div class="prediction__title">Predicted engagement</div>
+                <div class="prediction__sub">Based on your last 23 posts in this niche</div>
+              </div>
+              <div class="prediction__value">120-180</div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px;">
+              <button class="btn btn--primary" style="flex:1;">
+                <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+                Schedule for tomorrow 9:00 AM
+              </button>
+              <button class="btn">Save draft</button>
+              <button class="btn btn--ghost btn--icon" title="More">⋯</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ TRENDS ================ -->
+      <section class="view" id="view-trends" hidden>
+        <h1 class="view-title">Trends in your niche</h1>
+        <p class="view-subtitle">HackerNews · Reddit · Google News. Scored against your analyzed brand profile by Claude.</p>
+
+        <div class="filter-bar">
+          <div class="seg">
+            <button class="seg__btn is-active">All sources</button>
+            <button class="seg__btn">HackerNews</button>
+            <button class="seg__btn">Reddit</button>
+            <button class="seg__btn">Google News</button>
+          </div>
+          <div class="filter-bar__divider"></div>
+          <select class="select" style="width:170px;font-size:12px;padding:6px 10px;">
+            <option>Sort by relevance</option>
+            <option>Sort by recency</option>
+            <option>Sort by source score</option>
+          </select>
+          <select class="select" style="width:170px;font-size:12px;padding:6px 10px;">
+            <option>All time periods</option>
+            <option>Last 24 hours</option>
+            <option>Last 7 days</option>
+          </select>
+          <button class="btn btn--sm" style="margin-left:auto;">
+            <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh trends
+          </button>
+        </div>
+
+        <div>
+          <div class="trend-row">
+            <div>
+              <div class="trend-row__score">94</div>
+              <div class="trend-row__score-label">match</div>
+            </div>
+            <div>
+              <div class="trend-row__title">Anthropic releases new agent SDK with built-in tool use</div>
+              <div class="trend-row__angle"><strong>Suggested angle:</strong> Contrast it with how you wired your own routing layer in 20 lines of FastAPI.</div>
+              <div class="trend-row__meta">
+                <span class="pill pill--brand"><span class="pill-dot"></span>hackernews</span>
+                <span>487 points</span><span>·</span><span>2h ago</span>
+              </div>
+            </div>
+            <svg class="trend-row__spark" viewBox="0 0 90 36" preserveAspectRatio="none">
+              <polyline fill="rgba(14,165,233,0.12)" stroke="none" points="0,30 12,28 24,22 36,18 48,12 60,8 72,6 90,2 90,36 0,36"/>
+              <polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,30 12,28 24,22 36,18 48,12 60,8 72,6 90,2"/>
+            </svg>
+            <div class="trend-row__cta">
+              <button class="btn btn--primary btn--sm">Write post</button>
+            </div>
+          </div>
+
+          <div class="trend-row">
+            <div>
+              <div class="trend-row__score">88</div>
+              <div class="trend-row__score-label">match</div>
+            </div>
+            <div>
+              <div class="trend-row__title">"Founders are over-engineering their agents" — long thread on r/SaaS</div>
+              <div class="trend-row__angle"><strong>Suggested angle:</strong> Tell your "I deleted 60% of my codebase" story. Concrete numbers, before/after.</div>
+              <div class="trend-row__meta">
+                <span class="pill pill--warning"><span class="pill-dot"></span>reddit</span>
+                <span>1.2k upvotes</span><span>·</span><span>r/SaaS</span><span>·</span><span>5h ago</span>
+              </div>
+            </div>
+            <svg class="trend-row__spark" viewBox="0 0 90 36" preserveAspectRatio="none">
+              <polyline fill="rgba(14,165,233,0.12)" stroke="none" points="0,28 12,24 24,28 36,18 48,16 60,12 72,14 90,8 90,36 0,36"/>
+              <polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,28 12,24 24,28 36,18 48,16 60,12 72,14 90,8"/>
+            </svg>
+            <div class="trend-row__cta">
+              <button class="btn btn--sm">Write post</button>
+            </div>
+          </div>
+
+          <div class="trend-row">
+            <div>
+              <div class="trend-row__score">81</div>
+              <div class="trend-row__score-label">match</div>
+            </div>
+            <div>
+              <div class="trend-row__title">SaaS valuations slip as founders embed AI agents directly</div>
+              <div class="trend-row__angle"><strong>Suggested angle:</strong> What this means for solo builders shipping their own agents instead of buying SaaS.</div>
+              <div class="trend-row__meta">
+                <span class="pill pill--success"><span class="pill-dot"></span>google news</span>
+                <span>Bloomberg</span><span>·</span><span>just now</span>
+              </div>
+            </div>
+            <svg class="trend-row__spark" viewBox="0 0 90 36" preserveAspectRatio="none">
+              <polyline fill="rgba(14,165,233,0.12)" stroke="none" points="0,32 18,30 36,24 54,16 72,18 90,10 90,36 0,36"/>
+              <polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,32 18,30 36,24 54,16 72,18 90,10"/>
+            </svg>
+            <div class="trend-row__cta">
+              <button class="btn btn--sm">Write post</button>
+            </div>
+          </div>
+
+          <div class="trend-row">
+            <div>
+              <div class="trend-row__score">76</div>
+              <div class="trend-row__score-label">match</div>
+            </div>
+            <div>
+              <div class="trend-row__title">A recipe for prompt evals that doesn't suck</div>
+              <div class="trend-row__angle"><strong>Suggested angle:</strong> Your one-page agent design doc + what makes evals not boring.</div>
+              <div class="trend-row__meta">
+                <span class="pill pill--brand"><span class="pill-dot"></span>hackernews</span>
+                <span>256 points</span><span>·</span><span>3h ago</span>
+              </div>
+            </div>
+            <svg class="trend-row__spark" viewBox="0 0 90 36" preserveAspectRatio="none">
+              <polyline fill="rgba(14,165,233,0.12)" stroke="none" points="0,30 18,26 36,22 54,24 72,18 90,14 90,36 0,36"/>
+              <polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,30 18,26 36,22 54,24 72,18 90,14"/>
+            </svg>
+            <div class="trend-row__cta">
+              <button class="btn btn--sm">Write post</button>
+            </div>
+          </div>
+
+          <div class="trend-row" style="opacity:0.85;">
+            <div>
+              <div class="trend-row__score" style="color:var(--text-2)">62</div>
+              <div class="trend-row__score-label">match</div>
+            </div>
+            <div>
+              <div class="trend-row__title">"FastAPI vs Flask in 2026: who wins?" — HN front page</div>
+              <div class="trend-row__angle"><strong>Suggested angle:</strong> Why FastAPI shipped your agent in a weekend.</div>
+              <div class="trend-row__meta">
+                <span class="pill pill--brand"><span class="pill-dot"></span>hackernews</span>
+                <span>312 points</span><span>·</span><span>6h ago</span>
+              </div>
+            </div>
+            <svg class="trend-row__spark" viewBox="0 0 90 36" preserveAspectRatio="none">
+              <polyline fill="rgba(14,165,233,0.06)" stroke="none" points="0,28 18,26 36,28 54,22 72,24 90,18 90,36 0,36"/>
+              <polyline fill="none" stroke="#71717A" stroke-width="1.6" points="0,28 18,26 36,28 54,22 72,24 90,18"/>
+            </svg>
+            <div class="trend-row__cta">
+              <button class="btn btn--sm">Write post</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ SCHEDULE ================ -->
+      <section class="view" id="view-schedule" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div>
+            <h1 class="view-title">Schedule</h1>
+            <p class="view-subtitle">Your week at a glance. Drag posts between days to reschedule.</p>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <span style="font-size:14px;font-weight:600;padding:0 8px;">May 4 — May 10, 2026</span>
+            <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+            <div class="seg" style="margin-left:12px;">
+              <button class="seg__btn is-active">Week</button>
+              <button class="seg__btn">Month</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="calendar">
+          <div class="calendar__day">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Mon</span>
+              <span class="calendar__day-num calendar__day-num--today">4</span>
+            </div>
+            <div class="calendar__post calendar__post--published">
+              <span class="calendar__post-time">9:00 · ✓ live</span>
+              The 4-folder system I use
+            </div>
+          </div>
+          <div class="calendar__day">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Tue</span>
+              <span class="calendar__day-num">5</span>
+            </div>
+            <div class="calendar__post">
+              <span class="calendar__post-time">9:00 AM</span>
+              Why I stopped chaining LLMs
+            </div>
+          </div>
+          <div class="calendar__day">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Wed</span>
+              <span class="calendar__day-num">6</span>
+            </div>
+            <div class="calendar__post">
+              <span class="calendar__post-time">9:00 AM</span>
+              Most "AI websites" fail Lighthouse
+            </div>
+          </div>
+          <div class="calendar__day">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Thu</span>
+              <span class="calendar__day-num">7</span>
+            </div>
+            <div class="calendar__post">
+              <span class="calendar__post-time">9:00 AM</span>
+              I deleted 60% of my codebase
+            </div>
+          </div>
+          <div class="calendar__day">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Fri</span>
+              <span class="calendar__day-num">8</span>
+            </div>
+            <div class="calendar__post">
+              <span class="calendar__post-time">9:00 AM</span>
+              The 6-line prompt
+            </div>
+          </div>
+          <div class="calendar__day calendar__day--past">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Sat</span>
+              <span class="calendar__day-num">9</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0;">No post</div>
+          </div>
+          <div class="calendar__day calendar__day--past">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="calendar__day-name">Sun</span>
+              <span class="calendar__day-num">10</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-3);text-align:center;padding:14px 0;">No post</div>
+          </div>
+        </div>
+
+        <div class="card card--lg" style="margin-top:24px;">
+          <div class="card__title">Posting cadence</div>
+          <div class="kv-list">
+            <dt>Schedule</dt>
+            <dd>5 posts per week · Mon–Fri at 9:00 AM IST</dd>
+            <dt>Mode</dt>
+            <dd><span class="pill pill--warning"><span class="pill-dot"></span>Manual review</span> — every post needs your approval before publishing</dd>
+            <dt>Auto-fill</dt>
+            <dd>If a slot is empty 24h before, the agent picks the top-scoring trend and drafts a post</dd>
+            <dt>Streak</dt>
+            <dd>7 days · keep it going by approving tomorrow's draft today</dd>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ INBOX ================ -->
+      <section class="view" id="view-inbox" hidden>
+        <h1 class="view-title">Inbox</h1>
+        <p class="view-subtitle">Comments and DMs on your posts. Claude drafts replies in your voice — you approve and send.</p>
+
+        <div class="inbox-grid">
+          <div class="card" style="padding:0;overflow:hidden;">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--border);">
+              <div class="seg" style="width:100%;">
+                <button class="seg__btn is-active" style="flex:1;">All <span style="opacity:0.7;margin-left:4px">5</span></button>
+                <button class="seg__btn" style="flex:1;">Unread <span style="opacity:0.7;margin-left:4px">3</span></button>
+                <button class="seg__btn" style="flex:1;">Drafted</button>
+              </div>
+            </div>
+            <ul class="inbox-list">
+              <li class="is-active">
+                <div class="inbox-list__avatar" style="background:#0A66C2;">SK</div>
+                <div class="inbox-list__main">
+                  <div class="inbox-list__top">
+                    <span class="inbox-list__name">Sarah Khan</span>
+                    <span class="inbox-list__time">2h</span>
+                  </div>
+                  <div class="inbox-list__preview">Wait — so you ditched LangChain entirely? What about memory + tool use? How do you handle that without the framework?</div>
+                  <div class="inbox-list__post">on "I deleted 60% of my codebase"</div>
+                </div>
+                <div class="inbox-list__unread"></div>
+              </li>
+              <li>
+                <div class="inbox-list__avatar" style="background:#10B981;">MJ</div>
+                <div class="inbox-list__main">
+                  <div class="inbox-list__top">
+                    <span class="inbox-list__name">Marcus Johnson</span>
+                    <span class="inbox-list__time">3h</span>
+                  </div>
+                  <div class="inbox-list__preview">This is the post I needed today. DM me ROUTER — happy to share what we tried last quarter.</div>
+                  <div class="inbox-list__post">on "I deleted 60% of my codebase"</div>
+                </div>
+                <div class="inbox-list__unread"></div>
+              </li>
+              <li>
+                <div class="inbox-list__avatar" style="background:#F59E0B;">AP</div>
+                <div class="inbox-list__main">
+                  <div class="inbox-list__top">
+                    <span class="inbox-list__name">Aditi Patel</span>
+                    <span class="inbox-list__time">5h</span>
+                  </div>
+                  <div class="inbox-list__preview">Great hook. Curious — what's your stack for the routing layer? Pure FastAPI or do you bring Pydantic in?</div>
+                  <div class="inbox-list__post">on "Why I stopped chaining LLMs"</div>
+                </div>
+                <div class="inbox-list__unread"></div>
+              </li>
+              <li>
+                <div class="inbox-list__avatar" style="background:#71717A;">RT</div>
+                <div class="inbox-list__main">
+                  <div class="inbox-list__top">
+                    <span class="inbox-list__name">Ryan Torres</span>
+                    <span class="inbox-list__time">1d</span>
+                  </div>
+                  <div class="inbox-list__preview">Replied to your reply — yes, would love to see that diagram you mentioned.</div>
+                  <div class="inbox-list__post">on "The 4-folder system I use"</div>
+                </div>
+              </li>
+              <li>
+                <div class="inbox-list__avatar" style="background:#0EA5E9;">EL</div>
+                <div class="inbox-list__main">
+                  <div class="inbox-list__top">
+                    <span class="inbox-list__name">Elena López</span>
+                    <span class="inbox-list__time">1d</span>
+                  </div>
+                  <div class="inbox-list__preview">Saved this thread. Sharing with my team this week.</div>
+                  <div class="inbox-list__post">on "The 4-folder system I use"</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card inbox-detail">
+            <div class="inbox-detail__head">
+              <div class="inbox-list__avatar" style="background:#0A66C2;width:40px;height:40px;font-size:13px;">SK</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:600;">Sarah Khan</div>
+                <div style="font-size:12px;color:var(--text-3);">VP Engineering at Stride · 2nd connection</div>
+              </div>
+              <span class="pill pill--brand"><span class="pill-dot"></span>warm lead</span>
+            </div>
+
+            <div class="inbox-detail__source">
+              <div class="inbox-detail__source-label">Replying to your post</div>
+              I deleted LangChain on Tuesday. I rebuilt the whole agent layer in 20 lines of FastAPI. The product got faster, smaller, and stopped crashing in prod…
+            </div>
+
+            <div class="inbox-detail__comment">
+              <strong style="font-weight:600;">Sarah's comment:</strong>
+              <div style="margin-top:6px;color:var(--text);">"Wait — so you ditched LangChain entirely? What about memory + tool use? How do you handle that without the framework?"</div>
+            </div>
+
+            <div class="inbox-detail__draft">
+              <div class="inbox-detail__draft-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/></svg>
+                Claude drafted a reply in your voice · 91% match
+              </div>
+              <div class="inbox-detail__draft-text">Memory: Postgres + a thin retrieval helper.
+
+Tool use: my router decides which tool fires, then a vanilla function call.
+
+That's it. Zero framework, zero abstractions hiding the routing.
+
+The whole thing is &lt;200 lines. I'll send the diagram if you DM me ROUTER.</div>
+            </div>
+
+            <div class="inbox-detail__actions">
+              <button class="btn btn--primary">
+                <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Send reply
+              </button>
+              <button class="btn">Edit draft</button>
+              <button class="btn">Regenerate</button>
+              <button class="btn btn--ghost" style="margin-left:auto;">Skip</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================ ANALYTICS ================ -->
+      <section class="view" id="view-analytics" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div>
+            <h1 class="view-title">Analytics</h1>
+            <p class="view-subtitle">What's working, when it works, and which voice levers move the dial.</p>
+          </div>
+          <div class="seg">
+            <button class="seg__btn">7d</button>
+            <button class="seg__btn is-active">30d</button>
+            <button class="seg__btn">90d</button>
+            <button class="seg__btn">All</button>
+          </div>
+        </div>
+
+        <!-- main chart -->
+        <div class="card card--lg" style="margin-bottom:18px;">
+          <div class="card__title">
+            Reactions over time
+            <div style="display:flex;gap:14px;font-size:11px;color:var(--text-3);font-weight:400;">
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;background:#0EA5E9;border-radius:2px;"></span>Reactions</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;background:#10B981;border-radius:2px;"></span>Comments</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:8px;height:8px;background:#71717A;border-radius:2px;"></span>Reshares</span>
+            </div>
+          </div>
+          <svg viewBox="0 0 800 200" style="width:100%;height:200px;">
+            <!-- grid -->
+            <g stroke="rgba(255,255,255,0.05)" stroke-width="1">
+              <line x1="0" y1="40" x2="800" y2="40"/>
+              <line x1="0" y1="80" x2="800" y2="80"/>
+              <line x1="0" y1="120" x2="800" y2="120"/>
+              <line x1="0" y1="160" x2="800" y2="160"/>
+            </g>
+            <!-- reactions area -->
+            <polyline fill="rgba(14,165,233,0.15)" stroke="none" points="0,160 50,140 100,150 150,120 200,135 250,100 300,115 350,80 400,90 450,60 500,70 550,45 600,55 650,30 700,40 750,20 800,25 800,200 0,200"/>
+            <polyline fill="none" stroke="#0EA5E9" stroke-width="2" points="0,160 50,140 100,150 150,120 200,135 250,100 300,115 350,80 400,90 450,60 500,70 550,45 600,55 650,30 700,40 750,20 800,25"/>
+            <!-- comments line -->
+            <polyline fill="none" stroke="#10B981" stroke-width="1.5" points="0,180 50,170 100,175 150,165 200,170 250,150 300,160 350,140 400,150 450,130 500,140 550,120 600,130 650,115 700,125 750,100 800,110"/>
+            <!-- reshares line -->
+            <polyline fill="none" stroke="#71717A" stroke-width="1.5" stroke-dasharray="3 3" points="0,190 50,185 100,188 150,180 200,185 250,175 300,180 350,170 400,175 450,165 500,170 550,160 600,165 650,155 700,160 750,150 800,155"/>
+            <!-- top point dot -->
+            <circle cx="750" cy="20" r="4" fill="#0EA5E9"/>
+            <circle cx="750" cy="20" r="8" fill="#0EA5E9" opacity="0.3"/>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);margin-top:8px;">
+            <span>Apr 4</span><span>Apr 11</span><span>Apr 18</span><span>Apr 25</span><span>May 2</span>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-bottom:18px;">
+          <!-- Best time heatmap -->
+          <div class="card card--lg">
+            <div class="card__title">
+              Best posting times
+              <span class="card__title-link">your audience is online</span>
+            </div>
+            <div class="heatmap">
+              <span></span>
+              <span class="heatmap__col-label">M</span>
+              <span class="heatmap__col-label">T</span>
+              <span class="heatmap__col-label">W</span>
+              <span class="heatmap__col-label">T</span>
+              <span class="heatmap__col-label">F</span>
+              <span class="heatmap__col-label">S</span>
+              <span class="heatmap__col-label">S</span>
+
+              <span class="heatmap__row-label">6 AM</span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.12)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.12)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.18)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.15)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.12)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.06)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.06)"></span>
+
+              <span class="heatmap__row-label">9 AM</span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.85)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.78)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.92);outline:1.5px solid #0EA5E9;outline-offset:-2px;"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.82)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.7)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.2)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.18)"></span>
+
+              <span class="heatmap__row-label">12 PM</span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.55)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.48)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.6)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.5)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.4)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.25)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.2)"></span>
+
+              <span class="heatmap__row-label">3 PM</span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.4)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.3)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.42)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.38)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.32)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.18)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.15)"></span>
+
+              <span class="heatmap__row-label">6 PM</span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.25)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.2)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.28)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.22)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.18)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.12)"></span>
+              <span class="heatmap__cell" style="background:rgba(14,165,233,0.1)"></span>
+            </div>
+            <p style="font-size:12px;color:var(--text-2);margin:14px 0 0;line-height:1.55;">
+              Best slot: <strong style="color:var(--text);">Wed 9:00 AM IST</strong> · 12% above your weekly average. Worst slot: weekends after 6 PM.
+            </p>
+          </div>
+
+          <!-- Top posts -->
+          <div class="card card--lg">
+            <div class="card__title">
+              Top performing posts
+              <span class="card__title-link">last 30d</span>
+            </div>
+            <ol class="top-posts">
+              <li>
+                <div class="top-posts__rank top-posts__rank--1">1</div>
+                <div>
+                  <div class="top-posts__title">I deleted 60% of my codebase</div>
+                  <div class="top-posts__meta">contrarian · published Apr 28</div>
+                </div>
+                <div>
+                  <div class="top-posts__metric">156</div>
+                  <div class="top-posts__metric-sub">reactions</div>
+                </div>
+              </li>
+              <li>
+                <div class="top-posts__rank">2</div>
+                <div>
+                  <div class="top-posts__title">The 4-folder system I use</div>
+                  <div class="top-posts__meta">how-to · published May 4</div>
+                </div>
+                <div>
+                  <div class="top-posts__metric">142</div>
+                  <div class="top-posts__metric-sub">reactions</div>
+                </div>
+              </li>
+              <li>
+                <div class="top-posts__rank">3</div>
+                <div>
+                  <div class="top-posts__title">8 hours of my week disappeared</div>
+                  <div class="top-posts__meta">story · published Apr 21</div>
+                </div>
+                <div>
+                  <div class="top-posts__metric">118</div>
+                  <div class="top-posts__metric-sub">reactions</div>
+                </div>
+              </li>
+              <li>
+                <div class="top-posts__rank">4</div>
+                <div>
+                  <div class="top-posts__title">Multi-agent rent-payer</div>
+                  <div class="top-posts__meta">case study · published Apr 14</div>
+                </div>
+                <div>
+                  <div class="top-posts__metric">94</div>
+                  <div class="top-posts__metric-sub">reactions</div>
+                </div>
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Engagement by topic -->
+        <div class="card card--lg">
+          <div class="card__title">Engagement by topic</div>
+          <table class="topics-table">
+            <thead>
+              <tr>
+                <th style="width:24%;">Topic</th>
+                <th style="width:14%;">Posts</th>
+                <th style="width:18%;">Avg reactions</th>
+                <th style="width:44%;">Performance vs average</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Multi-agent systems</td>
+                <td>6</td>
+                <td>118 / post</td>
+                <td>
+                  +42%
+                  <div class="bar"><div class="bar__fill" style="width:92%;"></div></div>
+                </td>
+              </tr>
+              <tr>
+                <td>LangChain critique</td>
+                <td>3</td>
+                <td>134 / post</td>
+                <td>
+                  +61%
+                  <div class="bar"><div class="bar__fill" style="width:100%;"></div></div>
+                </td>
+              </tr>
+              <tr>
+                <td>Building in public</td>
+                <td>5</td>
+                <td>78 / post</td>
+                <td>
+                  -6%
+                  <div class="bar"><div class="bar__fill" style="width:48%;background:var(--text-3);"></div></div>
+                </td>
+              </tr>
+              <tr>
+                <td>FastAPI patterns</td>
+                <td>4</td>
+                <td>92 / post</td>
+                <td>
+                  +11%
+                  <div class="bar"><div class="bar__fill" style="width:62%;"></div></div>
+                </td>
+              </tr>
+              <tr>
+                <td>Solo founder ops</td>
+                <td>5</td>
+                <td>71 / post</td>
+                <td>
+                  -14%
+                  <div class="bar"><div class="bar__fill" style="width:42%;background:var(--text-3);"></div></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p style="font-size:12px;color:var(--text-2);margin:14px 0 0;line-height:1.55;">
+            <strong style="color:var(--text);">Insight:</strong> Contrarian and how-to formats outperform building-in-public by 60%+. The agent will weight new draft suggestions accordingly.
+          </p>
+        </div>
+      </section>
+
+      <!-- ================ SETUP ================ -->
+      <section class="view" id="view-setup" hidden>
+        <h1 class="view-title">Set up your automator</h1>
+        <p class="view-subtitle">Three steps. Five minutes. Then it runs on its own.</p>
+
+        <div class="stepper">
+          <div class="step step--done">
+            <div class="step__num">✓</div>
+            <div class="step__label">Connect profile</div>
+          </div>
+          <div class="step__line"></div>
+          <div class="step step--current">
+            <div class="step__num">2</div>
+            <div class="step__label">Tune your voice</div>
+          </div>
+          <div class="step__line"></div>
+          <div class="step">
+            <div class="step__num">3</div>
+            <div class="step__label">Pick cadence</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="align-items:start;">
+          <!-- Brand profile -->
+          <div class="card card--lg">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:20px;">
+              <div style="width:40px;height:40px;background:var(--success-soft);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div>
+                <div style="font-size:14px;font-weight:600;margin-bottom:2px;">Profile analyzed in 47 seconds</div>
+                <div style="font-size:12.5px;color:var(--text-2);line-height:1.5;">Scraped 12 recent posts · extracted 7 hook patterns · niche identified with 91% confidence.</div>
+              </div>
+            </div>
+
+            <h3 style="font-size:11px;font-weight:600;margin:0 0 12px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Brand profile</h3>
+            <dl class="kv-list" style="margin-bottom:20px;">
+              <dt>Name</dt><dd>Trishla Mishra</dd>
+              <dt>Niche</dt><dd>AI agents for SaaS founders</dd>
+              <dt>Audience</dt><dd>Solo founders shipping AI products · ops leads at small agencies</dd>
+              <dt>Tone</dt><dd>Confident, direct, mildly playful. One sentence per line. No corporate jargon, no em-dashes.</dd>
+            </dl>
+
+            <h3 style="font-size:11px;font-weight:600;margin:0 0 10px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.08em;">Topics</h3>
+            <div class="chip-list">
+              <span>multi-agent systems</span>
+              <span>prompt SOPs</span>
+              <span>FastAPI + Postgres</span>
+              <span>building in public</span>
+              <span>solo founder ops</span>
+              <span>LangChain critique</span>
+            </div>
+          </div>
+
+          <!-- Voice tuning sliders -->
+          <div class="card card--lg">
+            <h3 style="font-size:13px;font-weight:600;margin:0 0 4px;">Voice tuning</h3>
+            <p style="font-size:12px;color:var(--text-3);margin:0 0 18px;">Nudge the dials. The agent regenerates examples in real time so you can hear the change.</p>
+
+            <div class="range-row">
+              <div class="range-row__label">
+                <div>Length</div>
+                <div class="range-row__sublabel">short ↔ long</div>
+              </div>
+              <input type="range" min="0" max="100" value="35" />
+              <div class="range-row__value">Punchy</div>
+            </div>
+            <div class="range-row">
+              <div class="range-row__label">
+                <div>Tone</div>
+                <div class="range-row__sublabel">playful ↔ formal</div>
+              </div>
+              <input type="range" min="0" max="100" value="28" />
+              <div class="range-row__value">Playful</div>
+            </div>
+            <div class="range-row">
+              <div class="range-row__label">
+                <div>Specificity</div>
+                <div class="range-row__sublabel">vague ↔ data-heavy</div>
+              </div>
+              <input type="range" min="0" max="100" value="84" />
+              <div class="range-row__value">Specific</div>
+            </div>
+            <div class="range-row">
+              <div class="range-row__label">
+                <div>Contrarianism</div>
+                <div class="range-row__sublabel">safe ↔ hot take</div>
+              </div>
+              <input type="range" min="0" max="100" value="68" />
+              <div class="range-row__value">Bold</div>
+            </div>
+            <div class="range-row">
+              <div class="range-row__label">
+                <div>Self-disclosure</div>
+                <div class="range-row__sublabel">guarded ↔ open</div>
+              </div>
+              <input type="range" min="0" max="100" value="58" />
+              <div class="range-row__value">Personal</div>
+            </div>
+
+            <div style="margin-top:18px;padding:12px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);">
+              <div style="font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;margin-bottom:8px;">Live preview</div>
+              <div style="font-size:13px;line-height:1.55;color:var(--text);">
+                "I deleted LangChain on Tuesday. 200 lines became 20. The product got faster, smaller, and stopped crashing in prod."
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:18px;">
+              <button class="btn">Reset to detected</button>
+              <button class="btn btn--primary" style="margin-left:auto;">
+                Save & continue →
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trend sources -->
+        <div class="card card--lg" style="margin-top:18px;">
+          <div class="card__title">Trend sources</div>
+          <div class="checkbox-list">
+            <label>
+              <input type="checkbox" checked />
+              <span style="font-weight:500;">HackerNews</span>
+              <span class="check-meta">Free · No key required</span>
+            </label>
+            <label>
+              <input type="checkbox" checked />
+              <span style="font-weight:500;">Reddit</span>
+              <span class="check-meta">r/SaaS · r/MachineLearning · r/Entrepreneur</span>
+            </label>
+            <label>
+              <input type="checkbox" checked />
+              <span style="font-weight:500;">Google News RSS</span>
+              <span class="check-meta">Free · 5 keyword queries</span>
+            </label>
+            <label>
+              <input type="checkbox" />
+              <span style="font-weight:500;">X / Twitter</span>
+              <span class="check-meta">Requires Basic API · $100/mo</span>
+            </label>
+            <label>
+              <input type="checkbox" />
+              <span style="font-weight:500;">Product Hunt</span>
+              <span class="check-meta">Free · OAuth required</span>
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Command palette overlay (closed by default) -->
+  <div class="cmdk-overlay" id="cmdkOverlay" role="dialog" aria-label="Command palette">
+    <div class="cmdk">
+      <div class="cmdk__input-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="cmdk__input" placeholder="Search posts, trends, settings…" autofocus />
+        <span class="kbd">esc</span>
+      </div>
+      <div class="cmdk__list">
+        <div class="cmdk__group-label">Quick actions</div>
+        <div class="cmdk__item is-focused">
+          <svg class="cmdk__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          New post from topic
+          <span class="cmdk__item-shortcut">⌘N</span>
+        </div>
+        <div class="cmdk__item">
+          <svg class="cmdk__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Refresh trends
+          <span class="cmdk__item-shortcut">⌘⇧T</span>
+        </div>
+        <div class="cmdk__item">
+          <svg class="cmdk__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/></svg>
+          Re-analyze profile
+        </div>
+        <div class="cmdk__group-label">Navigate</div>
+        <div class="cmdk__item">
+          <svg class="cmdk__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/></svg>
+          Go to Dashboard
+          <span class="cmdk__item-shortcut">G then D</span>
+        </div>
+        <div class="cmdk__item">
+          <svg class="cmdk__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/></svg>
+          Go to Analytics
+          <span class="cmdk__item-shortcut">G then A</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast (hidden by default) -->
+  <div class="toast" id="toast">
+    <div class="toast__icon">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div>
+      <div style="font-weight:500;">Reply queued</div>
+      <div style="font-size:12px;color:var(--text-3);">Sarah will see it in your next reply batch</div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    const navItems = document.querySelectorAll('.nav-item[data-tab]');
+    const views = document.querySelectorAll('.view');
+    const crumbCurrent = document.getElementById('crumb-current');
+    const labels = {
+      dashboard: 'Dashboard', compose: 'Compose', trends: 'Trends',
+      schedule: 'Schedule', inbox: 'Inbox', analytics: 'Analytics', setup: 'Setup'
+    };
+    function activate(target) {
+      navItems.forEach(n => n.classList.toggle('is-active', n.dataset.tab === target));
+      views.forEach(v => v.hidden = v.id !== `view-${target}`);
+      crumbCurrent.textContent = labels[target] || target;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    navItems.forEach(item => item.addEventListener('click', () => activate(item.dataset.tab)));
+
+    // Segmented controls
+    document.querySelectorAll('.seg').forEach(seg => {
+      seg.querySelectorAll('.seg__btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          seg.querySelectorAll('.seg__btn').forEach(b => b.classList.toggle('is-active', b === btn));
+        });
+      });
+    });
+
+    // Variants click
+    document.querySelectorAll('.variant').forEach(v => {
+      v.addEventListener('click', () => {
+        document.querySelectorAll('.variant').forEach(x => x.classList.remove('is-selected'));
+        v.classList.add('is-selected');
+      });
+    });
+
+    // Notifications panel toggle
+    const notifBtn = document.getElementById('notifBtn');
+    const notifPanel = document.getElementById('notifPanel');
+    notifBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      notifPanel.hidden = !notifPanel.hidden;
+    });
+    document.addEventListener('click', e => {
+      if (!notifPanel.contains(e.target) && e.target !== notifBtn) notifPanel.hidden = true;
+    });
+
+    // Command palette
+    const cmdk = document.getElementById('cmdkOverlay');
+    document.getElementById('searchBox').addEventListener('click', () => cmdk.classList.add('is-open'));
+    cmdk.addEventListener('click', e => { if (e.target === cmdk) cmdk.classList.remove('is-open'); });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        if (e.key === 'Escape') cmdk.classList.remove('is-open');
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        cmdk.classList.toggle('is-open');
+        return;
+      }
+      if (e.key === 'Escape') cmdk.classList.remove('is-open');
+      const map = { d: 'dashboard', c: 'compose', t: 'trends', s: 'schedule', i: 'inbox', a: 'analytics' };
+      if (map[e.key.toLowerCase()]) activate(map[e.key.toLowerCase()]);
+    });
+
+    // Trend "Write post" → jump to compose + toast
+    document.querySelectorAll('.trend-row__cta button').forEach(btn => {
+      btn.addEventListener('click', e => { e.stopPropagation(); activate('compose'); });
+    });
+
+    // Inbox reply button → toast
+    document.querySelectorAll('.inbox-detail__actions .btn--primary').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = document.getElementById('toast');
+        t.classList.add('is-shown');
+        setTimeout(() => t.classList.remove('is-shown'), 2400);
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Automator</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230EA5E9'/><circle cx='9' cy='11' r='2.4' fill='white'/><circle cx='23' cy='11' r='2.4' fill='white'/><circle cx='16' cy='22' r='2.4' fill='white'/></svg>" />
+</head>
+<body>
+  <div class="app">
+    <!-- ============== SIDEBAR ============== -->
+    <aside class="sidebar">
+      <div class="brand">
+        <svg class="brand__logo" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="LinkedIn Automator logo">
+          <rect width="32" height="32" rx="7" fill="#0EA5E9"/>
+          <circle cx="9" cy="11" r="2.4" fill="white"/>
+          <circle cx="23" cy="11" r="2.4" fill="white"/>
+          <circle cx="16" cy="22" r="2.4" fill="white"/>
+          <path d="M9.7 12.6L15.3 20.4" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M22.3 12.6L16.7 20.4" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M11 11H21" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.4"/>
+        </svg>
+        <div>
+          <div class="brand__name">LinkedIn Automator</div>
+          <div class="brand__sub">v0.2 · self-hosted</div>
+        </div>
+      </div>
+
+      <div class="profile-chip" id="profileChip">
+        <div class="avatar" id="profileAvatar">··</div>
+        <div class="profile-chip__info">
+          <div class="profile-chip__name" id="profileName">Not connected</div>
+          <div class="profile-chip__niche" id="profileNiche">Run profile analyzer in Setup</div>
+        </div>
+        <div class="profile-chip__caret">⌄</div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Workspace</div>
+        <button class="nav-item is-active" data-tab="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+          <span class="kbd">D</span>
+        </button>
+        <button class="nav-item" data-tab="compose">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Compose
+          <span class="kbd">C</span>
+        </button>
+        <button class="nav-item" data-tab="trends">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Trends
+          <span class="kbd">T</span>
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Configuration</div>
+        <button class="nav-item" data-tab="setup">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Setup
+        </button>
+      </div>
+
+      <div class="sidebar__footer">
+        <span class="status-dot"></span>
+        <span id="footerStatus">Connecting…</span>
+      </div>
+    </aside>
+
+    <!-- ============== MAIN ============== -->
+    <main class="main">
+      <header class="main-header">
+        <div class="crumb">
+          <span>Workspace</span>
+          <span>/</span>
+          <span class="crumb__current" id="crumbCurrent">Dashboard</span>
+        </div>
+        <div class="header-actions">
+          <div class="status" id="status">connecting…</div>
+          <button class="btn btn--primary btn--sm" id="newPostBtn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New post
+          </button>
+        </div>
+      </header>
+
+      <!-- ===== DASHBOARD ===== -->
+      <section class="view" id="view-dashboard">
+        <div class="greeting">
+          <div>
+            <h1 class="greeting__title" id="dashboardGreeting">Welcome back</h1>
+            <div class="greeting__date" id="dashboardDate"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-4" style="margin-bottom: 20px;">
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Posts published
+            </div>
+            <div class="stat__value" id="statPublished">0</div>
+            <div class="stat__delta stat__delta--neutral" id="statPublishedDelta">all time</div>
+            <svg class="stat__spark" viewBox="0 0 100 32" preserveAspectRatio="none"><polyline fill="none" stroke="#0EA5E9" stroke-width="1.6" points="0,28 16,26 32,24 48,20 64,18 80,12 100,8"/><polyline fill="rgba(14,165,233,0.1)" stroke="none" points="0,28 16,26 32,24 48,20 64,18 80,12 100,8 100,32 0,32"/></svg>
+          </div>
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+              Scheduled
+            </div>
+            <div class="stat__value" id="statScheduled">0</div>
+            <div class="stat__delta stat__delta--neutral" id="statScheduledDelta">in queue</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Top trend
+            </div>
+            <div class="stat__value" id="statTopTrend">—</div>
+            <div class="stat__delta stat__delta--neutral" id="statTopTrendDelta">no trends yet</div>
+          </div>
+          <div class="stat">
+            <div class="stat__label">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Drafts
+            </div>
+            <div class="stat__value" id="statDrafts">0</div>
+            <div class="stat__delta stat__delta--neutral" id="statDraftsDelta">awaiting review</div>
+          </div>
+        </div>
+
+        <div class="grid grid-2-uneven">
+          <div class="panel">
+            <div class="panel__title">
+              Recent activity
+              <span style="font-size:11px;color:var(--text-3);font-weight:400;cursor:pointer" id="goToCompose">Open Compose →</span>
+            </div>
+            <ul class="activity" id="dashboardActivity">
+              <li>
+                <div class="activity__dot activity__dot--draft"></div>
+                <div class="activity__main">
+                  <div class="activity__title">Loading…</div>
+                  <div class="activity__sub">Reading recent posts from your local DB.</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="panel">
+            <div class="panel__title">Quick actions</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn" data-tab="compose">
+                <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Write a post
+              </button>
+              <button class="btn" data-tab="trends">
+                <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Browse trends
+              </button>
+              <button class="btn" data-tab="setup">
+                <svg class="btn-icon-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+                Re-analyze profile
+              </button>
+            </div>
+            <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+              <div style="font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">Posting mode</div>
+              <div style="font-size:13px;color:var(--text)" id="postingMode">manual_review</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Drafts wait for your approval before publishing.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== COMPOSE ===== -->
+      <section class="view" id="view-compose" hidden>
+        <h1 class="view-title">Compose a post</h1>
+        <p class="view-subtitle">Pick a starting point. Claude writes in your analyzed brand voice.</p>
+
+        <div class="layout">
+          <!-- LEFT: compose -->
+          <section class="compose">
+            <div class="panel__title" style="margin-bottom:12px;">Compose</div>
+
+            <div class="seg" style="margin-bottom:14px;">
+              <button class="seg__btn is-active" data-mode="topic">From topic</button>
+              <button class="seg__btn" data-mode="polish">Polish my draft</button>
+            </div>
+
+            <div class="field">
+              <label id="topicLabel">Topic or angle</label>
+              <textarea id="topic" rows="4" placeholder="e.g. Why I stopped chaining LLMs and started routing them"></textarea>
+            </div>
+
+            <div class="row">
+              <button class="btn btn--primary" id="btnWrite">Write post</button>
+              <button class="btn" id="btnIdeas">5 ideas</button>
+            </div>
+
+            <div class="ideas" id="ideas" hidden>
+              <h3>Ideas</h3>
+              <ul id="ideasList"></ul>
+            </div>
+          </section>
+
+          <!-- MIDDLE: preview -->
+          <section class="preview">
+            <div class="panel__title" style="margin-bottom:12px;">Preview</div>
+            <div class="empty" id="previewEmpty">No draft selected. Write a post or pick one from history.</div>
+            <article class="card draft" id="draftCard" hidden>
+              <header class="draft__header">
+                <span class="chip" id="draftStatus">draft</span>
+                <span class="muted" id="draftTopic"></span>
+              </header>
+              <textarea id="draftContent" class="draft__content"></textarea>
+              <input id="draftHashtags" class="draft__hashtags" placeholder="#AIautomation #LangChain" />
+              <div class="draft__image" id="draftImage" hidden style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+                <img id="draftImageEl" alt="Generated post image" style="width:100%;display:block;" />
+              </div>
+              <footer class="draft__actions">
+                <button class="btn btn--primary" id="btnSave">Save</button>
+                <button class="btn btn--accent" id="btnImage">+ Image</button>
+                <button class="btn" id="btnPublish">Publish now</button>
+                <div class="schedule">
+                  <input type="datetime-local" id="scheduleAt" />
+                  <button class="btn btn--accent" id="btnSchedule">Schedule</button>
+                </div>
+                <button class="btn btn--danger" id="btnDelete">Delete</button>
+              </footer>
+            </article>
+          </section>
+
+          <!-- RIGHT: history -->
+          <aside class="history">
+            <div class="history__head">
+              <div class="panel__title" style="margin:0;">History</div>
+              <button class="btn btn--ghost btn--small" id="btnRefresh" title="Refresh">↻</button>
+            </div>
+            <ul class="history__list" id="historyList"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===== TRENDS ===== -->
+      <section class="view" id="view-trends" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px;">
+          <h1 class="view-title" style="margin:0;">Trends in your niche</h1>
+          <button class="btn btn--ghost btn--small" id="btnRefreshTrends">↻ Refresh</button>
+        </div>
+        <p class="view-subtitle">HackerNews · Reddit · Google News — scored 0-100 against your niche by Claude. Click any trend to draft a post.</p>
+
+        <ul class="trends" id="trendsList"></ul>
+        <div class="empty" id="trendsEmpty">
+          No trends yet. Hit <strong>Refresh</strong> — first run takes ~30s while Claude scores them.
+        </div>
+      </section>
+
+      <!-- ===== SETUP ===== -->
+      <section class="view" id="view-setup" hidden>
+        <h1 class="view-title">Set up your automator</h1>
+        <p class="view-subtitle">Step 1 — paste a LinkedIn profile URL. Playwright scrapes the bio + recent posts; Claude extracts niche, audience, voice, and hook patterns. The result auto-populates <code>context/voice.md</code> and <code>context/brand.md</code>, so every post afterwards lands in this voice.</p>
+
+        <div class="panel">
+          <div class="field">
+            <label>Profile URL</label>
+            <input id="profileUrl" type="url" placeholder="https://www.linkedin.com/in/your-handle/" />
+          </div>
+          <div class="row">
+            <label class="check">
+              <input type="checkbox" id="profileHeadless" checked />
+              <span>Run headless (uncheck the first time to solve verification)</span>
+            </label>
+          </div>
+          <div class="row" style="margin-top:14px;">
+            <button class="btn btn--primary" id="btnAnalyze">Analyze profile</button>
+          </div>
+
+          <div id="profileResult" class="profile-result" hidden>
+            <h3>Brand profile</h3>
+            <dl class="kv-grid" id="profileKv"></dl>
+            <h3>Hook patterns</h3>
+            <ul id="profileHooks" class="bullets"></ul>
+            <h3>Topics</h3>
+            <div class="chips" id="profileTopics"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+data/posts.db
+data/posts.db-journal
+.venv/
+venv/
+node_modules/
+.playwright/
+state.json
+*.log
