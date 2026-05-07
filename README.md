@@ -73,8 +73,8 @@ Three things make this different from any "AI writes my LinkedIn posts" tool:
 
 ## Live
 
-- **Marketing site + interactive demo:** [linkedin-automator.vercel.app](https://linkedin-automator.vercel.app) *(replace with your deploy URL)*
-- **Vision dashboard preview:** [linkedin-automator.vercel.app/demo](https://linkedin-automator.vercel.app/demo)
+- **Marketing site + interactive demo:** [linkedin-automator-t9n3.vercel.app](https://linkedin-automator-t9n3.vercel.app)
+- **Vision dashboard preview:** [linkedin-automator-t9n3.vercel.app/demo](https://linkedin-automator-t9n3.vercel.app/demo)
 - **Self-hosted runtime:** `python run.py` → `http://127.0.0.1:8000`
 
 ---

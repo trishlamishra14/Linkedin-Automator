@@ -129,6 +129,15 @@ Gap caught: the `web/` dashboard only runs at localhost — there was no public-
 2. On Vercel: New Project → import the repo → no build command needed → Deploy.
 3. Update `trishla-portfolio/src/data/projects.ts` `liveUrl` field to the Vercel URL.
 
+### 2026-05-07 — LinkedIn Automator went live 🚀
+- Pushed repo to GitHub: [github.com/trishlamishra14/Linkedin-Automator](https://github.com/trishlamishra14/Linkedin-Automator).
+- Hit a snag: Vercel auto-detected the project as FastAPI (because of `requirements.txt` + `src/api.py`), which 404'd because no Python entry point matched Vercel's expected layout.
+- Fix: copied `site/index.html` to repo root as `index.html` (so Vercel's default static behavior serves it for `/`), simplified `vercel.json` to just the `/demo` rewrite, and added a `.vercelignore` to exclude `src/`, `requirements.txt`, `run.py`, etc. — forcing a pure-static deploy regardless of preset.
+- Live URL: **[linkedin-automator-t9n3.vercel.app](https://linkedin-automator-t9n3.vercel.app)**
+- Updated `trishla-portfolio/src/data/projects.ts` `liveUrl` field to point at the live Vercel deployment.
+- Updated README's "Live" section with the real URL (was a placeholder).
+- **Project status:** "In build" → "Shipped, public, open source." 🎯
+
 ---
 
 ## Decisions log

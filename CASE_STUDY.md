@@ -180,4 +180,4 @@ The whole UI ships in 8KB of JS.
 ---
 
 *Live demo: `python run.py` → `http://127.0.0.1:8000`*
-*Source: [github.com/trishla-mishra/linkedin-automator](https://github.com/trishla-mishra/linkedin-automator) (placeholder)*
+*Source: [github.com/trishlamishra14/Linkedin-Automator](https://github.com/trishlamishra14/Linkedin-Automator)*
