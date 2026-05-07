@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="LinkedIn Automator — open-source AI agent that learns your LinkedIn voice, watches HackerNews/Reddit/Google News for trends in your niche, drafts posts you'd actually write, and ships them on your schedule. Self-hosted. MIT licensed." />
+  <meta property="og:title" content="LinkedIn Automator — AI ghostwriter that sounds like you" />
+  <meta property="og:description" content="Open-source AI agent that learns your LinkedIn voice from your own profile, scouts trends in your niche, and drafts posts you'd actually write." />
+  <meta property="og:type" content="website" />
+  <title>LinkedIn Automator — AI ghostwriter that sounds like you</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230EA5E9'/><circle cx='9' cy='11' r='2.4' fill='white'/><circle cx='23' cy='11' r='2.4' fill='white'/><circle cx='16' cy='22' r='2.4' fill='white'/></svg>" />
+  <style>
+    /* =========================================================================
+       LinkedIn Automator — Marketing site
+       Dark sky-blue. Linear-inspired. No purple.
+       ========================================================================= */
+    :root {
+      color-scheme: dark;
+      --bg: #050507;
+      --bg-2: #09090B;
+      --surface: #131316;
+      --surface-2: #1C1C20;
+      --surface-3: #26262B;
+      --text: #FAFAFA;
+      --text-2: #A1A1AA;
+      --text-3: #71717A;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-2: rgba(255, 255, 255, 0.10);
+      --border-strong: rgba(255, 255, 255, 0.18);
+      --brand: #0EA5E9;
+      --brand-hover: #38BDF8;
+      --brand-soft: rgba(14, 165, 233, 0.12);
+      --brand-soft-2: rgba(14, 165, 233, 0.20);
+      --brand-text: #7DD3FC;
+      --linkedin: #0A66C2;
+      --success: #10B981;
+      --success-soft: rgba(16, 185, 129, 0.12);
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --shadow-lg: 0 32px 80px -20px rgba(14, 165, 233, 0.25);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      letter-spacing: -0.005em;
+      scroll-behavior: smooth;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    code { font-family: "Geist Mono", "SF Mono", Consolas, monospace; font-size: 0.92em; color: var(--brand-text); background: var(--surface-2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ambient glows */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 600px;
+      background:
+        radial-gradient(ellipse 80% 100% at 30% 0%, rgba(14, 165, 233, 0.10), transparent 70%),
+        radial-gradient(ellipse 50% 80% at 75% 0%, rgba(56, 189, 248, 0.06), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ==========================================================================
+       Container
+       ========================================================================== */
+    .container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 28px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ==========================================================================
+       Nav
+       ========================================================================== */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(5, 5, 7, 0.7);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.015em;
+    }
+    .logo svg { width: 28px; height: 28px; }
+    .nav__links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav__link {
+      padding: 7px 12px;
+      border-radius: var(--radius);
+      color: var(--text-2);
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.12s;
+    }
+    .nav__link:hover { color: var(--text); background: var(--surface); }
+
+    /* ==========================================================================
+       Buttons
+       ========================================================================== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-2);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: var(--surface-2); border-color: var(--border-strong); transform: translateY(-1px); }
+    .btn--primary {
+      background: var(--brand);
+      border-color: var(--brand);
+      color: #001821;
+      font-weight: 600;
+    }
+    .btn--primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+    .btn--ghost {
+      background: transparent;
+      border-color: transparent;
+      color: var(--text-2);
+    }
+    .btn--ghost:hover { background: var(--surface); color: var(--text); }
+    .btn--lg { padding: 13px 22px; font-size: 15px; }
+    .btn--sm { padding: 6px 12px; font-size: 12px; }
+    .btn svg { width: 14px; height: 14px; }
+
+    /* ==========================================================================
+       Section spacing
+       ========================================================================== */
+    section { padding: 80px 0; }
+    section h2 {
+      font-size: 38px;
+      font-weight: 600;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin: 0 0 16px;
+    }
+    section .lead {
+      font-size: 17px;
+      color: var(--text-2);
+      max-width: 640px;
+      margin: 0 0 48px;
+      line-height: 1.6;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--brand-text);
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-soft-2);
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+    .eyebrow .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--brand);
+      box-shadow: 0 0 8px var(--brand);
+    }
+
+    /* ==========================================================================
+       Hero
+       ========================================================================== */
+    .hero { padding: 100px 0 60px; text-align: center; }
+    .hero h1 {
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      margin: 0 0 24px;
+      max-width: 880px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 50%, #0284C7 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p {
+      font-size: 19px;
+      color: var(--text-2);
+      max-width: 660px;
+      margin: 0 auto 36px;
+      line-height: 1.55;
+    }
+    .hero__ctas {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .hero__sub {
+      font-size: 13px;
+      color: var(--text-3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .hero__sub::before, .hero__sub::after {
+      content: "·";
+      color: var(--text-3);
+    }
+    .hero__sub::before, .hero__sub::after { display: none; }
+    .hero__sub > span { display: inline-flex; align-items: center; gap: 8px; }
+    .hero__sub > span::after { content: "·"; color: var(--text-3); margin-left: 8px; }
+    .hero__sub > span:last-child::after { display: none; }
+
+    /* hero visual */
+    .hero__visual {
+      max-width: 1080px;
+      margin: 64px auto 0;
+      position: relative;
+    }
+    .browser-frame {
+      background: var(--surface);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .browser-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 14px;
+      background: var(--bg-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .browser-dot {
+      width: 11px; height: 11px;
+      border-radius: 50%;
+      background: var(--surface-3);
+    }
+    .browser-dot--red { background: #FF5F57; }
+    .browser-dot--yellow { background: #FEBC2E; }
+    .browser-dot--green { background: #28C840; }
+    .browser-url {
+      flex: 1;
+      margin-left: 12px;
+      padding: 5px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: "Geist Mono", monospace;
+      font-size: 12px;
+      color: var(--text-3);
+      text-align: center;
+      max-width: 380px;
+      margin: 0 auto;
+    }
+    .browser-url-icon {
+      display: inline-block;
+      width: 10px; height: 10px;
+      vertical-align: middle;
+      margin-right: 6px;
+      color: var(--success);
+    }
+    .browser-body {
+      padding: 0;
+      height: 540px;
+      overflow: hidden;
+      position: relative;
+    }
+    .browser-body iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    /* ==========================================================================
+       Trust strip
+       ========================================================================== */
+    .trust {
+      padding: 36px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .trust__label {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-3);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 22px;
+    }
+    .trust__row {
+      display: flex;
+      gap: 36px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      opacity: 0.7;
+    }
+    .trust__item {
+      font-family: "Geist Mono", monospace;
+      font-size: 14px;
+      color: var(--text-2);
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       Problem section
+       ========================================================================== */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 36px;
+    }
+    .problem-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+    }
+    .problem-card__num {
+      font-family: "Geist Mono", monospace;
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--brand);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .problem-card__num small { font-size: 18px; color: var(--text-3); font-weight: 500; }
+    .problem-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 8px 0 8px;
+      letter-spacing: -0.01em;
+    }
+    .problem-card p {
+      font-size: 14px;
+      color: var(--text-2);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* ==========================================================================
+       How it works — pipeline
+       ========================================================================== */
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 36px;
+      position: relative;
+    }
+    .pipeline::before {
+      content: "";
+      position: absolute;
+      top: 38px;
+      left: 12%;
+      right: 12%;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--border-strong) 10%,
+        var(--brand) 50%,
+        var(--border-strong) 90%,
+        transparent 100%
+      );
+      z-index: 0;
+    }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      position: relative;
+      z-index: 1;
+    }
+    .step__icon {
+      width: 44px; height: 44px;
+      background: var(--brand-soft);
+      border: 1px solid var(--brand-soft-2);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .step__icon svg { width: 18px; height: 18px; color: var(--brand); }
+    .step__num {
+      font-family: "Geist Mono", monospace;
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .step h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .step p {
+      font-size: 13.5px;
+      color: var(--text-2);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    /* ==========================================================================
+       Features grid
+       ========================================================================== */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 36px;
+    }
+    .feature {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: all 0.15s;
+    }
+    .feature:hover {
+      border-color: var(--border-strong);
+      transform: translateY(-2px);
+    }
+    .feature__icon {
+      width: 36px; height: 36px;
+      background: var(--brand-soft);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+    }
+    .feature__icon svg { width: 16px; height: 16px; color: var(--brand); }
+    .feature h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin: 0 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .feature__badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--surface-3);
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .feature__badge--soon {
+      background: var(--brand-soft);
+      color: var(--brand-text);
+    }
+    .feature p {
+      font-size: 13.5px;
+      color: var(--text-2);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    /* ==========================================================================
+       Demo CTA
+       ========================================================================== */
+    .demo-cta {
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(14,165,233,0.06) 100%);
+      border: 1px solid var(--brand-soft-2);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      text-align: center;
+      margin-top: 36px;
+    }
+    .demo-cta h3 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+    }
+    .demo-cta p { color: var(--text-2); margin: 0 0 20px; }
+
+    /* ==========================================================================
+       Architecture
+       ========================================================================== */
+    .arch {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      margin-top: 36px;
+    }
+    .arch svg { width: 100%; max-width: 800px; height: auto; display: block; margin: 0 auto; }
+    .arch__caption {
+      font-size: 13px;
+      color: var(--text-3);
+      text-align: center;
+      margin-top: 20px;
+      font-style: italic;
+    }
+
+    /* ==========================================================================
+       Stack
+       ========================================================================== */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 32px;
+    }
+    .stack-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+    .stack-item__name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .stack-item__role { font-size: 12px; color: var(--text-3); }
+
+    /* ==========================================================================
+       Pricing
+       ========================================================================== */
+    .pricing {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 760px;
+      margin: 36px auto 0;
+    }
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      position: relative;
+    }
+    .price-card--highlight {
+      border-color: var(--brand);
+      background: linear-gradient(135deg, var(--surface) 0%, rgba(14,165,233,0.05) 100%);
+    }
+    .price-card__tag {
+      position: absolute;
+      top: -10px;
+      left: 24px;
+      background: var(--brand);
+      color: #001821;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .price-card h3 { font-size: 14px; color: var(--text-2); font-weight: 600; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .price-card .price {
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .price-card .price-sub { font-size: 13px; color: var(--text-3); margin-bottom: 20px; }
+    .price-card ul {
+      list-style: none;
+      margin: 20px 0;
+      padding: 0;
+      font-size: 14px;
+      color: var(--text-2);
+    }
+    .price-card ul li {
+      padding: 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .price-card ul li svg {
+      width: 14px; height: 14px;
+      color: var(--brand);
+      flex-shrink: 0;
+    }
+
+    /* ==========================================================================
+       FAQ
+       ========================================================================== */
+    .faq { max-width: 760px; margin: 36px auto 0; }
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+    }
+    .faq-item:first-child { border-top: 1px solid var(--border); }
+    .faq-item summary {
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary::after {
+      content: "+";
+      font-size: 20px;
+      color: var(--text-3);
+      font-weight: 300;
+      transition: transform 0.2s;
+    }
+    .faq-item[open] summary::after { transform: rotate(45deg); }
+    .faq-item p {
+      margin: 12px 0 0;
+      color: var(--text-2);
+      font-size: 14.5px;
+      line-height: 1.65;
+    }
+
+    /* ==========================================================================
+       Final CTA
+       ========================================================================== */
+    .final-cta {
+      text-align: center;
+      padding: 100px 0;
+      background:
+        radial-gradient(ellipse 80% 100% at 50% 100%, rgba(14, 165, 233, 0.08), transparent 70%);
+    }
+    .final-cta h2 {
+      font-size: 48px;
+      max-width: 720px;
+      margin: 0 auto 16px;
+    }
+    .final-cta p { font-size: 18px; color: var(--text-2); max-width: 560px; margin: 0 auto 32px; }
+    .final-cta__ctas {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* ==========================================================================
+       Footer
+       ========================================================================== */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      background: var(--bg-2);
+    }
+    .footer__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer__copy { font-size: 13px; color: var(--text-3); }
+    .footer__copy a { color: var(--brand-text); }
+    .footer__links {
+      display: flex;
+      gap: 18px;
+      font-size: 13px;
+    }
+    .footer__links a {
+      color: var(--text-3);
+      transition: color 0.12s;
+    }
+    .footer__links a:hover { color: var(--text); }
+
+    /* ==========================================================================
+       Responsive
+       ========================================================================== */
+    @media (max-width: 900px) {
+      section { padding: 60px 0; }
+      .hero { padding: 60px 0 40px; }
+      .hero h1 { font-size: 40px; }
+      section h2 { font-size: 30px; }
+      .final-cta h2 { font-size: 32px; }
+      .problem-grid, .pipeline, .features, .stack-grid, .pricing { grid-template-columns: 1fr; }
+      .pipeline::before { display: none; }
+      .browser-body { height: 380px; }
+      .nav__links .nav__link:not(.btn) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ============== NAV ============== -->
+  <nav class="nav">
+    <div class="container nav__inner">
+      <a href="#" class="logo">
+        <svg viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="7" fill="#0EA5E9"/>
+          <circle cx="9" cy="11" r="2.4" fill="white"/>
+          <circle cx="23" cy="11" r="2.4" fill="white"/>
+          <circle cx="16" cy="22" r="2.4" fill="white"/>
+          <path d="M9.7 12.6L15.3 20.4" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M22.3 12.6L16.7 20.4" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+          <path d="M11 11H21" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.4"/>
+        </svg>
+        <span>LinkedIn Automator</span>
+      </a>
+      <div class="nav__links">
+        <a class="nav__link" href="#features">Features</a>
+        <a class="nav__link" href="#how">How it works</a>
+        <a class="nav__link" href="#demo">Demo</a>
+        <a class="nav__link" href="#pricing">Pricing</a>
+        <a class="btn btn--sm" href="https://github.com/trishla-mishra/linkedin-automator" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          Star on GitHub
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============== HERO ============== -->
+  <section class="hero">
+    <div class="container">
+      <div class="eyebrow">
+        <span class="dot"></span>
+        Open source · Self-hosted · MIT licensed
+      </div>
+      <h1>
+        AI ghostwriter that <span class="grad">actually sounds like you</span>.
+      </h1>
+      <p>
+        Learns your voice from your LinkedIn profile. Watches HackerNews, Reddit, and Google News for trends in your niche. Drafts posts you'd actually write. Ships them on your schedule.
+      </p>
+      <div class="hero__ctas">
+        <a class="btn btn--primary btn--lg" href="https://github.com/trishla-mishra/linkedin-automator" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          Get started on GitHub
+        </a>
+        <a class="btn btn--lg" href="#demo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Watch the demo
+        </a>
+      </div>
+      <div class="hero__sub">
+        <span>Free forever to self-host</span>
+        <span>No credit card</span>
+        <span>Replies in &lt;24h</span>
+      </div>
+
+      <div class="hero__visual">
+        <div class="browser-frame">
+          <div class="browser-chrome">
+            <span class="browser-dot browser-dot--red"></span>
+            <span class="browser-dot browser-dot--yellow"></span>
+            <span class="browser-dot browser-dot--green"></span>
+            <div class="browser-url">
+              <svg class="browser-url-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1l9 4v6c0 5.55-3.84 10.74-9 12-5.16-1.26-9-6.45-9-12V5l9-4z"/></svg>
+              localhost:8000
+            </div>
+          </div>
+          <div class="browser-body">
+            <iframe src="/preview.html" title="LinkedIn Automator dashboard preview"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== TRUST STRIP ============== -->
+  <div class="trust">
+    <div class="container">
+      <div class="trust__label">Built with</div>
+      <div class="trust__row">
+        <div class="trust__item">Anthropic Claude</div>
+        <div class="trust__item">Playwright</div>
+        <div class="trust__item">FastAPI</div>
+        <div class="trust__item">Replicate</div>
+        <div class="trust__item">SQLite</div>
+        <div class="trust__item">APScheduler</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== PROBLEM ============== -->
+  <section id="problem">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>The problem</div>
+      <h2>Posting on LinkedIn is a tax on focused work.</h2>
+      <p class="lead">
+        You know you should post. You sit down. You stare at the blinking cursor. By the time you've found your angle and your voice, the morning is gone. Generic AI tools sound like ChatGPT, not you. Schedulers can post for you but can't write.
+      </p>
+      <div class="problem-grid">
+        <div class="problem-card">
+          <div class="problem-card__num">8h<small>/wk</small></div>
+          <h3>Lost to writing &amp; staring</h3>
+          <p>The average founder loses a full workday a week to LinkedIn — most of it staring, not writing.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-card__num">~0%</div>
+          <h3>Of AI tools sound like you</h3>
+          <p>Generic AI ghostwriters give you generic AI prose. Your audience can spot it from the first sentence.</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-card__num">$40<small>/mo</small></div>
+          <h3>For tools that don't write</h3>
+          <p>Buffer, Typefully, Hootsuite cost more than this whole stack does to run, and they only schedule. They don't draft.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== HOW IT WORKS ============== -->
+  <section id="how">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>How it works</div>
+      <h2>Four agents. One pipeline. Your voice.</h2>
+      <p class="lead">
+        Each agent does one job well. The output of one becomes the input to the next. You stay in the loop at every step you choose to be — or you don't, and it just runs.
+      </p>
+      <div class="pipeline">
+        <div class="step">
+          <div class="step__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>
+          </div>
+          <div class="step__num">01</div>
+          <h3>Analyze your voice</h3>
+          <p>Paste a profile URL. Playwright scrapes your bio &amp; recent posts. Claude extracts niche, tone, hook patterns.</p>
+        </div>
+        <div class="step">
+          <div class="step__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="step__num">02</div>
+          <h3>Watch the world</h3>
+          <p>HackerNews, Reddit, Google News — every morning. Claude scores each item 0-100 against your niche.</p>
+        </div>
+        <div class="step">
+          <div class="step__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <div class="step__num">03</div>
+          <h3>Draft in your voice</h3>
+          <p>Pick a topic or trend. Claude writes hook + body + CTA matching your brand brief. Add an AI-generated image.</p>
+        </div>
+        <div class="step">
+          <div class="step__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
+          </div>
+          <div class="step__num">04</div>
+          <h3>Ship on schedule</h3>
+          <p>Review, edit, schedule. Playwright opens a real browser, types the post, hits Publish. Screenshot saved as proof.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FEATURES ============== -->
+  <section id="features" style="background: var(--bg-2);">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>Features</div>
+      <h2>Everything you need. Nothing you don't.</h2>
+      <p class="lead">A single self-hosted Python service. No SaaS lock-in. No monthly subscription. Your data stays on your machine.</p>
+      <div class="features">
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0113 0"/></svg>
+          </div>
+          <h3>Voice analysis</h3>
+          <p>Scrapes your bio + 12 recent posts. Extracts niche, audience, tone, hook patterns, signature phrases, CTA style. ~47 seconds.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3>Multi-source trend scout</h3>
+          <p>HackerNews, Reddit (any subreddit), Google News RSS. Free APIs. Daily auto-refresh via APScheduler cron.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3>Niche relevance scoring <span class="feature__badge">live</span></h3>
+          <p>Claude scores every trend 0-100 against your analyzed brand profile. Only the top matches surface in the dashboard.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </div>
+          <h3>A/B variants <span class="feature__badge feature__badge--soon">v0.3</span></h3>
+          <p>Generate 3 takes on the same topic — different framings, voice-match scores. Pick the best, ship it.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <h3>AI-generated images</h3>
+          <p>Replicate Flux Schnell at ~$0.003 per image. Claude crafts the prompt; image attaches to your post automatically.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <h3>Cron scheduler</h3>
+          <p>Schedule one post or a recurring cadence. Three modes: dry-run, manual review, fully autonomous.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <h3>Engagement Inbox <span class="feature__badge feature__badge--soon">v0.4</span></h3>
+          <p>Comments &amp; DMs land in an inbox. Claude drafts replies in your voice — you approve and send.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h3>Performance analytics <span class="feature__badge feature__badge--soon">v0.5</span></h3>
+          <p>Time-of-day heatmap, top posts, engagement-by-topic. The agent learns what's working and weights drafts accordingly.</p>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          </div>
+          <h3>Self-hosted &amp; private</h3>
+          <p>SQLite on your disk. Your LinkedIn session in your local <code>state.json</code>. No telemetry, no third-party data ever.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== DEMO ============== -->
+  <section id="demo">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>See it in action</div>
+      <h2>The vision dashboard, live in your browser.</h2>
+      <p class="lead">
+        Click around the live preview below — switch tabs, see the LinkedIn-style post mockup, browse the trends list. This is exactly what runs on <code>localhost:8000</code> when you self-host.
+      </p>
+      <div class="demo-cta">
+        <h3>Open the full interactive preview</h3>
+        <p>Tabs work, segments toggle, trends jump to Compose. No backend required.</p>
+        <a class="btn btn--primary btn--lg" href="/preview.html" target="_blank" rel="noopener">
+          Open the demo →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== ARCHITECTURE ============== -->
+  <section id="architecture">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>Architecture</div>
+      <h2>Five small services. One clean pipeline.</h2>
+      <p class="lead">No frameworks-on-top-of-frameworks. Each module does one thing and exposes a clean function. Read the source in 30 minutes.</p>
+      <div class="arch">
+        <svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#0EA5E9" opacity="0.7"/>
+            </marker>
+          </defs>
+
+          <!-- nodes -->
+          <g font-family="Inter, sans-serif" font-size="13" fill="#FAFAFA">
+            <!-- Profile Analyzer -->
+            <rect x="20" y="20" width="180" height="80" rx="10" fill="#131316" stroke="rgba(14,165,233,0.4)" stroke-width="1.5"/>
+            <text x="110" y="48" text-anchor="middle" font-weight="600">Profile Analyzer</text>
+            <text x="110" y="68" text-anchor="middle" font-size="11" fill="#A1A1AA">Playwright + Claude</text>
+            <text x="110" y="84" text-anchor="middle" font-size="11" fill="#71717A">scrape + extract voice</text>
+
+            <!-- Trend Scout -->
+            <rect x="20" y="140" width="180" height="80" rx="10" fill="#131316" stroke="rgba(14,165,233,0.4)" stroke-width="1.5"/>
+            <text x="110" y="168" text-anchor="middle" font-weight="600">Trend Scout</text>
+            <text x="110" y="188" text-anchor="middle" font-size="11" fill="#A1A1AA">HN · Reddit · GNews</text>
+            <text x="110" y="204" text-anchor="middle" font-size="11" fill="#71717A">score against niche</text>
+
+            <!-- Content Agent (center) -->
+            <rect x="310" y="80" width="180" height="80" rx="10" fill="#0EA5E9" stroke="#0EA5E9"/>
+            <text x="400" y="108" text-anchor="middle" font-weight="700" fill="#001821">Content Agent</text>
+            <text x="400" y="128" text-anchor="middle" font-size="11" fill="#001821" opacity="0.85">Anthropic Claude</text>
+            <text x="400" y="144" text-anchor="middle" font-size="11" fill="#001821" opacity="0.7">draft post in voice</text>
+
+            <!-- Image Agent -->
+            <rect x="310" y="220" width="180" height="80" rx="10" fill="#131316" stroke="rgba(14,165,233,0.4)" stroke-width="1.5"/>
+            <text x="400" y="248" text-anchor="middle" font-weight="600">Image Agent</text>
+            <text x="400" y="268" text-anchor="middle" font-size="11" fill="#A1A1AA">Replicate Flux Schnell</text>
+            <text x="400" y="284" text-anchor="middle" font-size="11" fill="#71717A">~$0.003 / image</text>
+
+            <!-- Scheduler -->
+            <rect x="600" y="20" width="180" height="80" rx="10" fill="#131316" stroke="rgba(14,165,233,0.4)" stroke-width="1.5"/>
+            <text x="690" y="48" text-anchor="middle" font-weight="600">Scheduler</text>
+            <text x="690" y="68" text-anchor="middle" font-size="11" fill="#A1A1AA">APScheduler</text>
+            <text x="690" y="84" text-anchor="middle" font-size="11" fill="#71717A">cron + one-shot</text>
+
+            <!-- LinkedIn Poster -->
+            <rect x="600" y="140" width="180" height="80" rx="10" fill="#131316" stroke="rgba(14,165,233,0.4)" stroke-width="1.5"/>
+            <text x="690" y="168" text-anchor="middle" font-weight="600">LinkedIn Poster</text>
+            <text x="690" y="188" text-anchor="middle" font-size="11" fill="#A1A1AA">Playwright async</text>
+            <text x="690" y="204" text-anchor="middle" font-size="11" fill="#71717A">publish + screenshot</text>
+
+            <!-- DB -->
+            <ellipse cx="690" cy="280" rx="80" ry="22" fill="#131316" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+            <text x="690" y="284" text-anchor="middle" font-size="12" fill="#A1A1AA">SQLite · posts.db</text>
+          </g>
+
+          <!-- arrows -->
+          <g stroke="#0EA5E9" stroke-width="1.5" fill="none" opacity="0.7" marker-end="url(#arrow)">
+            <path d="M200 60 Q255 60, 310 110"/>
+            <path d="M200 180 Q255 180, 310 130"/>
+            <path d="M490 120 L600 60"/>
+            <path d="M400 160 L400 220"/>
+            <path d="M490 260 Q545 260, 600 200"/>
+            <path d="M780 100 Q820 130, 780 170"/>
+          </g>
+          <g stroke="rgba(255,255,255,0.18)" stroke-width="1" stroke-dasharray="4 3" fill="none" marker-end="url(#arrow)">
+            <path d="M690 220 L690 258"/>
+          </g>
+        </svg>
+        <div class="arch__caption">Each module is one Python file under 200 lines. Swap any of them without touching the others.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== STACK ============== -->
+  <section id="stack" style="padding-top:0;">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>Stack</div>
+      <h2>Boring tools, sharp choices.</h2>
+      <p class="lead">No framework-on-framework Jenga tower. Standard libraries where they suffice, paid APIs only where they earn it.</p>
+      <div class="stack-grid">
+        <div class="stack-item"><div class="stack-item__name">Anthropic Claude</div><div class="stack-item__role">Voice analysis · post writing · trend scoring</div></div>
+        <div class="stack-item"><div class="stack-item__name">Playwright</div><div class="stack-item__role">Profile scraping · LinkedIn publishing</div></div>
+        <div class="stack-item"><div class="stack-item__name">FastAPI</div><div class="stack-item__role">JSON API · static dashboard</div></div>
+        <div class="stack-item"><div class="stack-item__name">SQLite + SQLModel</div><div class="stack-item__role">Single-file persistence</div></div>
+        <div class="stack-item"><div class="stack-item__name">APScheduler</div><div class="stack-item__role">Cron + date-trigger jobs</div></div>
+        <div class="stack-item"><div class="stack-item__name">Replicate Flux</div><div class="stack-item__role">Brand-on AI images</div></div>
+        <div class="stack-item"><div class="stack-item__name">Vanilla JS + CSS</div><div class="stack-item__role">Dashboard, no build step</div></div>
+        <div class="stack-item"><div class="stack-item__name">Pydantic Settings</div><div class="stack-item__role">Type-safe config from .env</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PRICING ============== -->
+  <section id="pricing" style="background: var(--bg-2);">
+    <div class="container">
+      <div class="eyebrow" style="text-align:left;"><span class="dot"></span>Pricing</div>
+      <h2 style="text-align:center;">Free forever, self-hosted.</h2>
+      <p class="lead" style="text-align:center;margin-left:auto;margin-right:auto;">You run it on your laptop or a $5/mo VPS. You pay only the AI usage, which is pennies per post.</p>
+      <div class="pricing">
+        <div class="price-card price-card--highlight">
+          <span class="price-card__tag">Recommended</span>
+          <h3>Self-hosted</h3>
+          <div class="price">$0</div>
+          <div class="price-sub">forever · open source</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Full source on GitHub</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Your data stays on your machine</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Bring your own API keys</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Modify, fork, white-label, resell</li>
+          </ul>
+          <a class="btn btn--primary" href="https://github.com/trishla-mishra/linkedin-automator" target="_blank" rel="noopener">
+            Clone the repo →
+          </a>
+        </div>
+        <div class="price-card">
+          <h3>API usage cost</h3>
+          <div class="price">~$3–5</div>
+          <div class="price-sub">per month · paid to providers, not us</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Claude: ~$0.04/post (with variants)</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Replicate: ~$0.003/image</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Trend refresh: ~$0.03/day</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Cap your spend in Anthropic console</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FAQ ============== -->
+  <section id="faq">
+    <div class="container">
+      <div class="eyebrow"><span class="dot"></span>FAQ</div>
+      <h2 style="text-align:center;">Questions, answered straight.</h2>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>Will this get my LinkedIn account flagged?</summary>
+          <p>Risk is low if you stay human-paced. The default mode is <code>manual_review</code> — every post needs your approval, you click Publish at most once a day. LinkedIn's terms of service technically restrict automation, but mainstream tools (Buffer, Taplio, Phantombuster) all operate in this gray area. The realistic line is: post ~daily with human review, you're fine. Crank it to 5×/day fully autonomous and you'll get flagged. Don't do that.</p>
+        </details>
+        <details class="faq-item">
+          <summary>What happens when LinkedIn changes their UI?</summary>
+          <p>The Playwright selectors live in one dict at the top of <code>linkedin_poster.py</code>. When a button moves, it's a 3-line fix. Historically LinkedIn updates the post composer once every 6-9 months. Pull requests welcome.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Do I need to know Python?</summary>
+          <p>To run it, no — clone the repo, copy <code>.env.example</code> to <code>.env</code>, fill in three keys, run <code>python run.py</code>. To customize the brand voice prompts, you edit markdown files in <code>context/</code>. To extend the agents, yes, basic Python helps.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Why not use the LinkedIn API instead of browser automation?</summary>
+          <p>LinkedIn's Marketing API requires multi-week app approval and is restricted in what it allows for personal accounts. Playwright works today on any account. The trade-off is selector maintenance — see above.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Is my LinkedIn login stored anywhere?</summary>
+          <p>Locally in a <code>state.json</code> file Playwright generates after your first successful sign-in. It's git-ignored. Nothing leaves your machine.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Can I post on behalf of clients (agency use)?</summary>
+          <p>v0.2 is single-account. Multi-account support is on the roadmap (Sprint 6). Workaround for now: clone the repo per client, run on separate ports.</p>
+        </details>
+        <details class="faq-item">
+          <summary>How do I deploy this to a server instead of my laptop?</summary>
+          <p>Drop the repo on a $5/mo VPS (Hetzner, Railway, Fly.io). FastAPI runs on uvicorn; Playwright needs Chromium installed. Run <code>python run.py</code> as a systemd service. 30 minutes total.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FINAL CTA ============== -->
+  <section class="final-cta">
+    <div class="container">
+      <h2>Stop staring at LinkedIn. Start shipping in your voice.</h2>
+      <p>Open source, self-hosted, MIT licensed. Five minutes from clone to first post.</p>
+      <div class="final-cta__ctas">
+        <a class="btn btn--primary btn--lg" href="https://github.com/trishla-mishra/linkedin-automator" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+          Get started on GitHub
+        </a>
+        <a class="btn btn--lg" href="/preview.html">
+          See the demo →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <footer>
+    <div class="container footer__inner">
+      <div class="footer__copy">
+        Built by <a href="https://trishla.dev" target="_blank" rel="noopener">Trishla Mishra</a> · MIT licensed · 2026
+      </div>
+      <div class="footer__links">
+        <a href="https://github.com/trishla-mishra/linkedin-automator" target="_blank" rel="noopener">GitHub</a>
+        <a href="/preview.html">Demo</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="https://trishla.dev" target="_blank" rel="noopener">Portfolio</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

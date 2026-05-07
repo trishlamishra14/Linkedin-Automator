@@ -1,0 +1,13 @@
+src/
+data/
+context/
+docs/
+.venv/
+venv/
+__pycache__/
+*.pyc
+requirements.txt
+run.py
+sprint-01-public-ship.md
+progress.md
+CASE_STUDY.md
